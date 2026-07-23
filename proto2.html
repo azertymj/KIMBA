@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SETRAG — Système Billettique Centralisé (Prototype Lot 1)</title>
+    <!-- CSS & Frameworks CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f4f6f9;
+            --bg-surface: #ffffff;
+            --bg-sidebar: #1e293b;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-on-dark: #f8fafc;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --transition: all 0.2s ease-in-out;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-sidebar: #090d16;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== POPUP D'INTRODUCTION AU PROTOTYPE ===== */
+        .intro-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 10, 20, 0.72);
+            backdrop-filter: blur(3px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: overlayFade 0.25s ease;
+        }
+        @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
+
+        .intro-modal {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            width: min(560px, 90vw);
+            border-radius: 14px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+            overflow: hidden;
+            animation: modalPop 0.3s cubic-bezier(.2,.9,.3,1.2);
+        }
+        @keyframes modalPop { from { opacity: 0; transform: translateY(14px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .intro-modal-header {
+            background: linear-gradient(135deg, #1e293b 0%, #2563eb 130%);
+            color: #fff;
+            padding: 22px 26px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .intro-modal-header .brand-logo {
+            background-color: var(--accent);
+            color: #000;
+            font-weight: bold;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            font-size: 1.3rem;
+        }
+        .intro-modal-header h2 { font-size: 1.15rem; font-weight: 700; }
+        .intro-modal-header span { font-size: 0.8rem; opacity: 0.85; display:block; margin-top:2px; }
+
+        .intro-modal-body { padding: 24px 26px 8px; }
+        .intro-modal-body p { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.55; margin-bottom: 14px; }
+        .intro-feature-list { list-style: none; margin-bottom: 16px; }
+        .intro-feature-list li {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 0.87rem; padding: 6px 0; color: var(--text-primary);
+        }
+        .intro-feature-list li i { color: var(--primary); margin-top: 3px; }
+        .intro-disclaimer {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #92400e;
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            font-size: 0.78rem;
+            margin-bottom: 18px;
+        }
+        [data-theme="dark"] .intro-disclaimer { color: #fbbf24; }
+
+        .intro-modal-footer {
+            padding: 16px 26px 24px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .intro-modal-footer .btn { font-size: 0.95rem; padding: 10px 22px; }
+
+        /* Bannière permanente rappelant qu'il s'agit d'un prototype */
+        .demo-banner {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: help;
+        }
+        .demo-banner i { color: var(--accent); }
+
+        /* Sidebar Nav */
+        aside {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            color: var(--text-on-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .brand {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .brand-logo {
+            background-color: var(--accent);
+            color: #000;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            font-size: 1.2rem;
+        }
+
+        .brand-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+        .brand-sub {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-list {
+            list-style: none;
+            padding: 15px 10px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 4px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        .user-profile {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Content Structure */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-surface);
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title-wrap { display: flex; flex-direction: column; gap: 2px; }
+        .header-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-warning { background-color: var(--warning); color: #1e1305; }
+        .btn-warning:hover { filter: brightness(0.95); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { background-color: var(--border); }
+        .btn-outline.active { background-color: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .content-area {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .tab-module {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-module.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Layout Grid System */
+        .grid { display: grid; gap: 20px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        /* UI Components */
+        .card {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .card + .card { margin-top: 0; }
+        .card.full-width { margin-top: 20px; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+        .form-control:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Data Tables */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .badge-warning { background-color: rgba(245, 158, 11, 0.1); color: var(--accent); }
+        .badge-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .badge-neutral { background-color: rgba(100, 116, 139, 0.12); color: var(--text-secondary); }
+
+        /* Train Seat Map Component */
+        .train-wagon {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background-color: var(--bg-primary);
+            padding: 15px;
+            border-radius: var(--radius);
+            max-width: 320px;
+        }
+
+        .seat {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background-color: var(--bg-surface);
+        }
+
+        .seat.available:hover { background-color: #dbeafe; border-color: var(--primary); }
+        .seat.selected { background-color: var(--primary); color: white; }
+        .seat.occupied { background-color: var(--border); color: var(--text-secondary); cursor: not-allowed; }
+        .seat.blocked { background-color: #fee2e2; color: var(--danger); cursor: not-allowed; }
+
+        /* Ticket Template */
+        .ticket-preview {
+            border: 2px dashed var(--border);
+            padding: 20px;
+            border-radius: var(--radius);
+            background: var(--bg-surface);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Timeline (Livret Horaire) */
+        .schedule-track {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        .schedule-stop {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 110px;
+            position: relative;
+        }
+        .schedule-stop .dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid var(--bg-surface);
+            box-shadow: 0 0 0 2px var(--primary);
+            z-index: 2;
+        }
+        .schedule-stop .line {
+            position: absolute;
+            top: 6px; left: 50%; width: 100%;
+            height: 2px; background: var(--border);
+            z-index: 1;
+        }
+        .schedule-stop:last-child .line { display: none; }
+        .schedule-stop .stop-name { font-size: 0.8rem; font-weight: 600; margin-top: 8px; }
+        .schedule-stop .stop-time { font-size: 0.72rem; color: var(--text-secondary); }
+
+        /* Sync queue */
+        .sync-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; border-radius: var(--radius);
+            background: var(--bg-primary); margin-bottom: 8px; font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== POPUP D'INTRODUCTION AU PROTOTYPE (fermeture manuelle obligatoire) ===== -->
+    <div class="intro-overlay" id="introOverlay">
+        <div class="intro-modal">
+            <div class="intro-modal-header">
+                <div class="brand-logo">S</div>
+                <div>
+                    <h2>Prototype de démonstration — Lot 1</h2>
+                    <span>ONE-J TECH · Back-office Billettique SETRAG</span>
+                </div>
+            </div>
+            <div class="intro-modal-body">
+                <p>Cet écran est un <strong>prototype interactif</strong> conçu pour illustrer, module par module, ce que ONE-J TECH ambitionne de livrer pour le Lot 1 (back-office billettique). Il vous permet de visualiser concrètement l'ergonomie et l'enchaînement des fonctionnalités avant tout développement.</p>
+                <ul class="intro-feature-list">
+                    <li><i class="fa-solid fa-user-shield"></i> Sécurité, SSO/AD, MFA et journalisation (Module 1)</li>
+                    <li><i class="fa-solid fa-database"></i> Référentiels : trains, places, tarifs, livrets horaires (Module 2)</li>
+                    <li><i class="fa-solid fa-ticket"></i> Moteur de vente billet voyageur (Module 3)</li>
+                    <li><i class="fa-solid fa-box"></i> Bagages, colis express, TAA, funéraire (Module 4)</li>
+                    <li><i class="fa-solid fa-receipt"></i> Contrôle, comptabilité SAGE X3 et KPI (Module 5)</li>
+                    <li><i class="fa-solid fa-sliders"></i> Mode dégradé, API Front Office et Yield Management (Modules 6-8)</li>
+                </ul>
+                <div class="intro-disclaimer">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Les données affichées (ventes, utilisateurs, montants) sont fictives et ne reflètent aucune donnée réelle de la SETRAG. Ce prototype n'est pas connecté à un système en production.
+                </div>
+            </div>
+            <div class="intro-modal-footer">
+                <button class="btn btn-primary" onclick="closeIntro()"><i class="fa-solid fa-xmark"></i> Fermer et découvrir la démo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de Navigation Latérale -->
+    <aside>
+        <div>
+            <div class="brand">
+                <div class="brand-logo">S</div>
+                <div>
+                    <div class="brand-title">SETRAG BILLETTIQUE</div>
+                    <div class="brand-sub">Prototype Lot 1 — ONE-J TECH</div>
+                </div>
+            </div>
+            <ul class="nav-list">
+                <li class="nav-item active" onclick="switchTab('mod-dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard & Ventes</li>
+                <li class="nav-item" onclick="switchTab('mod-1')"><i class="fa-solid fa-user-shield"></i> Mod. 1 — Sécurité & RBAC</li>
+                <li class="nav-item" onclick="switchTab('mod-2')"><i class="fa-solid fa-database"></i> Mod. 2 — Référentiels</li>
+                <li class="nav-item" onclick="switchTab('mod-3')"><i class="fa-solid fa-ticket"></i> Mod. 3 — Billets Voyageur</li>
+                <li class="nav-item" onclick="switchTab('mod-4')"><i class="fa-solid fa-box"></i> Mod. 4 — Articles Annexes</li>
+                <li class="nav-item" onclick="switchTab('mod-5')"><i class="fa-solid fa-receipt"></i> Mod. 5 — Compta SAGE & KPI</li>
+                <li class="nav-item" onclick="switchTab('mod-6')"><i class="fa-solid fa-file-pen"></i> Mod. 6 — Mode Dégradé</li>
+                <li class="nav-item" onclick="switchTab('mod-7')"><i class="fa-solid fa-mobile-screen"></i> Mod. 7 — APIs / Contrôle</li>
+                <li class="nav-item" onclick="switchTab('mod-8')"><i class="fa-solid fa-sliders"></i> Mod. 8 — Yield Management</li>
+            </ul>
+        </div>
+        <div class="user-profile">
+            <div class="user-info">
+                <div class="avatar">AD</div>
+                <div>
+                    <div style="font-weight:600; font-size:0.85rem;">Admin Système</div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">Gare d'Owendo</div>
+                </div>
+            </div>
+            <button class="btn btn-outline" style="padding: 5px 8px; color:white;" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </aside>
+
+    <!-- Zone de Contenu Principal -->
+    <main>
+        <header>
+            <div class="header-title-wrap">
+                <div class="header-title" id="page-title">Tableau de Bord Général</div>
+                <div class="demo-banner" title="Ce tableau de bord présente des données fictives à but de démonstration"><i class="fa-solid fa-circle-info"></i> Prototype de démonstration — données fictives</div>
+            </div>
+            <div class="header-actions">
+                <span class="badge badge-success"><i class="fa-solid fa-wifi"></i> Connexion ERAMET OK</span>
+                <button class="btn btn-primary" onclick="switchTab('mod-3')"><i class="fa-solid fa-plus"></i> Nouvelle Vente</button>
+            </div>
+        </header>
+
+        <div class="content-area">
+
+            <!-- DASHBOARD PRINCIPAL -->
+            <div id="mod-dashboard" class="tab-module active">
+                <div class="grid grid-4" style="margin-bottom:20px;">
+                    <div class="card">
+                        <div class="card-title">Ventes du jour</div>
+                        <div style="font-size:1.8rem; font-weight:700; margin: 10px 0;">1 245 000 FCFA</div>
+                        <span class="badge badge-success">+12% vs Hier</span>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Billets Émis</div>
+                        <div style="font-size:1.8rem; font-weight:700; margin: 10px 0;">342</div>
+                        <span class="badge badge-warning">Express 201 N'Djolé</span>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Taux Remplissage</div>
+                        <div style="font-size:1.8rem; font-weight:700; margin: 10px 0;">88%</div>
+                        <span class="badge badge-success">Haute Saison</span>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Anomalies / Fraudes</div>
+                        <div style="font-size:1.8rem; font-weight:700; margin: 10px 0;">0</div>
+                        <span class="badge badge-success">Traçabilité SIEM OK</span>
+                    </div>
+                </div>
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Répartition des Ventes par Canal</div></div>
+                        <canvas id="salesChart" height="200"></canvas>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Dernières Transactions Guichet</div></div>
+                        <table class="table">
+                            <thead><tr><th>Réf</th><th>Produit</th><th>Client</th><th>Prix</th><th>Statut</th></tr></thead>
+                            <tbody>
+                                <tr><td>#TK-8831</td><td>Billet Voyageur</td><td>M. Ondo</td><td>25 000 F</td><td><span class="badge badge-success">Payé</span></td></tr>
+                                <tr><td>#BG-1022</td><td>Bagage Excédent</td><td>Mme. Nzooghe</td><td>3 500 F</td><td><span class="badge badge-success">Payé</span></td></tr>
+                                <tr><td>#CL-0041</td><td>Colis Express</td><td>Gabon Lox</td><td>12 000 F</td><td><span class="badge badge-warning">Transit</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 1 : SOCLE AUTH, RBAC & SÉCURITÉ -->
+            <div id="mod-1" class="tab-module">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Gestion des Utilisateurs Active Directory / SSO</div></div>
+                        <div class="form-group"><label>Rechercher un agent AD</label><input type="text" class="form-control" placeholder="Ex: e_moussavou"></div>
+                        <table class="table-responsive">
+                            <thead><tr><th>AD Username</th><th>Nom</th><th>Rôle</th><th>MFA Statut</th><th>Action</th></tr></thead>
+                            <tbody>
+                                <tr><td>a_nzue</td><td>Antoine Nzue</td><td>Vendeur Guichet</td><td><span class="badge badge-success">FIDO2 Actif</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-pen"></i></button></td></tr>
+                                <tr><td>c_obame</td><td>Clarisse Obame</td><td>Contrôleur Train</td><td><span class="badge badge-success">OTP Push</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-pen"></i></button></td></tr>
+                                <tr><td>j_seydoux</td><td>J-B. Seydoux</td><td>Administrateur IT</td><td><span class="badge badge-success">FIDO2 Actif</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-pen"></i></button></td></tr>
+                                <tr><td>e_moussavou</td><td>E. Moussavou</td><td>Compte désactivé (AD)</td><td><span class="badge badge-danger">Déprovisionné</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Journal d'Audit de Sécurité (SIEM)</div></div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead><tr><th>Horodatage</th><th>Utilisateur</th><th>Action</th><th>IP</th><th>Résultat</th></tr></thead>
+                                <tbody>
+                                    <tr><td>23/07/2026 14:32</td><td>a_nzue</td><td>Émission Billet TK-8831</td><td>10.4.12.5</td><td><span class="badge badge-success">SUCCESS</span></td></tr>
+                                    <tr><td>23/07/2026 14:10</td><td>c_obame</td><td>Validation Place A-12</td><td>10.8.0.12</td><td><span class="badge badge-success">SUCCESS</span></td></tr>
+                                    <tr><td>23/07/2026 13:58</td><td>inconnu</td><td>3 échecs de connexion</td><td>41.158.22.9</td><td><span class="badge badge-danger">COMPTE VERROUILLÉ</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-subtitle" style="margin-top:12px;">Chaque action de vente, blocage de place, annulation ou remboursement est journalisée et exploitable pour l'audit (exigence de traçabilité du CDC).</div>
+                    </div>
+                </div>
+                <div class="card full-width">
+                    <div class="card-header"><div class="card-title">Matrice des Permissions par Rôle (RBAC)</div></div>
+                    <table class="table">
+                        <thead><tr><th>Rôle</th><th>Consultation</th><th>Vente / Modification</th><th>Annulation / Remboursement</th><th>Validation Tarifs & Livrets</th></tr></thead>
+                        <tbody>
+                            <tr><td>Vendeur Guichet</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-neutral">Non</span></td><td><span class="badge badge-neutral">Non</span></td></tr>
+                            <tr><td>Responsable Point de Vente</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-neutral">Non</span></td></tr>
+                            <tr><td>Administrateur Fonctionnel</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-success">Oui</span></td></tr>
+                            <tr><td>Contrôleur Train</td><td><span class="badge badge-success">Oui</span></td><td><span class="badge badge-warning">Vente à bord uniquement</span></td><td><span class="badge badge-neutral">Non</span></td><td><span class="badge badge-neutral">Non</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODULE 2 : RÉFÉRENTIELS MÉTIER -->
+            <div id="mod-2" class="tab-module">
+                <div class="grid grid-3">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Trains & Composition</div></div>
+                        <div class="form-group"><label>Sélectionner le Train</label>
+                            <select class="form-control"><option>Train 201 — Express (Owendo → Franceville)</option><option>Train 102 — Omnibus</option></select>
+                        </div>
+                        <div class="form-group"><label>Voitures rattachées</label>
+                            <ul style="list-style:none; padding: 5px;">
+                                <li style="padding:5px; border-bottom:1px solid var(--border);">Voiture V-01 (1ère Classe)</li>
+                                <li style="padding:5px; border-bottom:1px solid var(--border);">Voiture V-02 (2ème Classe)</li>
+                                <li style="padding:5px;">Voiture V-03 (VIP Bar)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Plan & Blocage des Places (Wagon V-01)</div></div>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:10px;">Cliquez pour bloquer/débloquer une place</p>
+                        <div class="train-wagon" id="seatMap">
+                            <div class="seat occupied">01</div><div class="seat occupied">02</div><div class="seat available">03</div><div class="seat available">04</div>
+                            <div class="seat available">05</div><div class="seat blocked">06</div><div class="seat available">07</div><div class="seat available">08</div>
+                            <div class="seat available">09</div><div class="seat available">10</div><div class="seat available">11</div><div class="seat available">12</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Grilles Tarifaires & Arrondis</div></div>
+                        <div class="form-group"><label>Tarif de base / Palier km</label><input type="text" class="form-control" value="0-99km : Arrondi 10 FCFA"></div>
+                        <div class="form-group"><label>Réduction Enfant (4-11 ans)</label><input type="text" class="form-control" value="-50%" readonly></div>
+                        <div class="form-group"><label>Réduction Groupe (10-49 pers.)</label><input type="text" class="form-control" value="-30%" readonly></div>
+                        <button class="btn btn-primary" style="width:100%;">Mettre à jour les Tarifs</button>
+                    </div>
+                </div>
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Livret Horaire — Planning des Circulations</div>
+                            <div class="card-subtitle">Train 201 Express — Version active du 01/06/2026 au 31/08/2026</div>
+                        </div>
+                        <span class="badge badge-success">Activé</span>
+                    </div>
+                    <div class="schedule-track">
+                        <div class="schedule-stop"><div class="line"></div><div class="dot"></div><div class="stop-name">Owendo</div><div class="stop-time">06:00 — Départ</div></div>
+                        <div class="schedule-stop"><div class="line"></div><div class="dot"></div><div class="stop-name">N'Djolé</div><div class="stop-time">08:45</div></div>
+                        <div class="schedule-stop"><div class="line"></div><div class="dot"></div><div class="stop-name">Booué</div><div class="stop-time">11:20</div></div>
+                        <div class="schedule-stop"><div class="line"></div><div class="dot"></div><div class="stop-name">Lastourville</div><div class="stop-time">13:05</div></div>
+                        <div class="schedule-stop"><div class="dot"></div><div class="stop-name">Franceville</div><div class="stop-time">16:30 — Arrivée</div></div>
+                    </div>
+                    <div class="header-actions" style="margin-top:10px;">
+                        <button class="btn btn-outline"><i class="fa-solid fa-file-import"></i> Importer un nouveau livret</button>
+                        <button class="btn btn-outline"><i class="fa-solid fa-clock-rotate-left"></i> Historique des versions</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 3 : MOTEUR DE VENTE BILLET VOYAGEUR -->
+            <div id="mod-3" class="tab-module">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Guichet Vente Voyageur</div></div>
+                        <form onsubmit="event.preventDefault(); alert('Billet émis avec succès ! (identifiant unique généré, doublon vérifié)');">
+                            <div class="grid grid-2">
+                                <div class="form-group"><label>Gare Départ</label><select class="form-control"><option>Owendo</option><option>N'Djolé</option></select></div>
+                                <div class="form-group"><label>Gare Arrivée</label><select class="form-control"><option>Franceville</option><option>Booué</option></select></div>
+                            </div>
+                            <div class="grid grid-2">
+                                <div class="form-group"><label>Nom Voyageur</label><input type="text" class="form-control" placeholder="Nom complet"></div>
+                                <div class="form-group"><label>Téléphone</label><input type="text" class="form-control" placeholder="+241..."></div>
+                            </div>
+                            <div class="grid grid-2">
+                                <div class="form-group"><label>Classe</label><select class="form-control"><option>2ème Classe</option><option>1ère Classe</option><option>VIP</option></select></div>
+                                <div class="form-group"><label>Mode de Paiement</label>
+                                    <select class="form-control">
+                                        <option>Airtel Money</option><option>Moov Money</option><option>Click&amp;Pay</option><option>Espèces (Cash)</option><option>Carte VISA / Mastercard</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success" style="width:100%;"><i class="fa-solid fa-print"></i> Valider et Éditer Billet</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Aperçu & Génération Ticket QR</div></div>
+                        <div class="ticket-preview">
+                            <div style="text-align:center; font-weight:bold; margin-bottom:10px;">SETRAG — BILLET VOYAGEUR</div>
+                            <hr style="margin:10px 0;">
+                            <p><strong>N° Billet:</strong> TK-20260723-9921</p>
+                            <p><strong>Trajet:</strong> Owendo ➔ Franceville</p>
+                            <p><strong>Train:</strong> 201 Express — Place 12B</p>
+                            <p><strong>Prix TTC:</strong> 25 000 FCFA (Dont CSS/TVA)</p>
+                            <div style="text-align:center; margin-top:15px;">
+                                <i class="fa-solid fa-qrcode" style="font-size:100px;"></i>
+                            </div>
+                        </div>
+                        <div class="card-subtitle" style="margin-top:12px; text-align:center;">Ce même billet pourra être scanné et validé depuis l'application Contrôleur (Module 7).</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 4 : ARTICLES ANNEXES (BAGAGE, COLIS, TAA, FUNÉRAIRE) -->
+            <div id="mod-4" class="tab-module">
+                <div class="card">
+                    <div class="card-header"><div class="card-title">Enregistrement Prestations Annexes</div></div>
+                    <div class="grid grid-4" style="margin-bottom:20px;">
+                        <button class="btn btn-outline active" data-article="bagage" onclick="switchArticle('bagage', event)"><i class="fa-solid fa-suitcase"></i> Bagage</button>
+                        <button class="btn btn-outline" data-article="colis" onclick="switchArticle('colis', event)"><i class="fa-solid fa-truck-fast"></i> Colis Express</button>
+                        <button class="btn btn-outline" data-article="taa" onclick="switchArticle('taa', event)"><i class="fa-solid fa-car"></i> Transport Auto (TAA)</button>
+                        <button class="btn btn-outline" data-article="funeraire" onclick="switchArticle('funeraire', event)"><i class="fa-solid fa-cross"></i> Transport Funéraire</button>
+                    </div>
+
+                    <!-- Champs dynamiques selon le type d'article sélectionné -->
+                    <div class="grid grid-2">
+                        <div class="form-group" id="field-billetRattache"><label>N° Billet Voyageur Rattaché</label><input type="text" class="form-control" placeholder="Ex: TK-8831"></div>
+                        <div class="form-group" id="field-poids"><label>Poids du Bagage (kg)</label><input type="number" class="form-control" placeholder="Poids max 30kg"></div>
+                        <div class="form-group" id="field-expediteur" style="display:none;"><label>Expéditeur</label><input type="text" class="form-control" placeholder="Nom de l'expéditeur"></div>
+                        <div class="form-group" id="field-destinataire" style="display:none;"><label>Destinataire</label><input type="text" class="form-control" placeholder="Nom du destinataire"></div>
+                        <div class="form-group" id="field-vignette" style="display:none;"><label>N° de Vignette</label><input type="text" class="form-control" placeholder="Généré automatiquement"></div>
+                        <div class="form-group" id="field-immat" style="display:none;"><label>Immatriculation Véhicule</label><input type="text" class="form-control" placeholder="Ex: GA-1234-LBV"></div>
+                    </div>
+
+                    <div class="form-group" id="field-tracking">
+                        <label>Statut Tracking (Interfaçage COLIRAIL)</label>
+                        <input type="text" class="form-control" value="Colis #CL-0041 : Reçu en gare d'Owendo — Notification SMS envoyée à l'expéditeur" readonly>
+                    </div>
+                    <button class="btn btn-primary" id="btn-article-action"><i class="fa-solid fa-tag"></i> Éditer Étiquette Bagage</button>
+                </div>
+            </div>
+
+            <!-- MODULE 5 : CONTROLE, JOURNAL SAGE X3 & KPI -->
+            <div id="mod-5" class="tab-module">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Génération Journal Comptable SAGE X3 V12</div></div>
+                        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:15px;">Export conforme à la structure d'état V65 (HT, TVA, CSS, Axes Analytiques).</p>
+                        <div class="form-group"><label>Date comptable</label><input type="date" class="form-control" value="2026-07-23"></div>
+                        <button class="btn btn-primary" onclick="alert('Export V65 généré et déversé vers SAGE X3 !');"><i class="fa-solid fa-file-export"></i> Déverser vers SAGE X3</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">État de Caisse et Rapprochement Ventes</div></div>
+                        <table class="table">
+                            <thead><tr><th>Mode de Paiement</th><th>Cumul Ventes</th><th>Écart</th></tr></thead>
+                            <tbody>
+                                <tr><td>Espèces (Guichet)</td><td>450 000 F</td><td><span class="badge badge-success">0 F</span></td></tr>
+                                <tr><td>Airtel Money API</td><td>620 000 F</td><td><span class="badge badge-success">0 F</span></td></tr>
+                                <tr><td>Moov Money API</td><td>175 000 F</td><td><span class="badge badge-success">0 F</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">KPI & Reporting — Volumétrie annuelle (illustratif, cf. données du CDC)</div>
+                            <div class="card-subtitle">Suivi de l'activité par type de prestation, exportable pour la Direction Commerciale</div>
+                        </div>
+                        <button class="btn btn-outline"><i class="fa-solid fa-download"></i> Exporter le rapport</button>
+                    </div>
+                    <canvas id="volumeChart" height="90"></canvas>
+                </div>
+            </div>
+
+            <!-- MODULE 6 : MODE DÉGRADÉ / VENTE MANUELLE -->
+            <div id="mod-6" class="tab-module">
+                <div class="card">
+                    <div class="card-header"><div class="card-title">Rattrapage & Saisie des Ventes Manuelles Hors-Ligne</div></div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:15px;">Utilisé pour rattacher les billets papier pré-imprimés vendus lors de pannes réseau. Le n° pré-imprimé est doublé de l'identifiant système pour garantir la continuité de la numérotation.</p>
+                    <div class="grid grid-3">
+                        <div class="form-group"><label>N° Ticket Papier Pré-imprimé</label><input type="text" class="form-control" placeholder="P-0004521"></div>
+                        <div class="form-group"><label>Gare d'Émission</label><input type="text" class="form-control" value="Gare de Booué"></div>
+                        <div class="form-group"><label>Montant Perçu</label><input type="number" class="form-control" placeholder="Montant FCFA"></div>
+                    </div>
+                    <button class="btn btn-warning" onclick="alert('Billet dégradé réconcilié et injecté dans la numérotation globale.');"><i class="fa-solid fa-arrows-rotate"></i> Intégrer la Vente Manuelle</button>
+                </div>
+            </div>
+
+            <!-- MODULE 7 : APIs FRONT OFFICE & CONTRÔLEUR -->
+            <div id="mod-7" class="tab-module">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">API Exposition Front-Office (Application Web/Mobile SETRAG)</div></div>
+                        <div class="form-group"><label>Clé API Front-Office Partner</label><input type="text" class="form-control" value="setrag_live_pk_993021882103" readonly></div>
+                        <div class="form-group"><label>Endpoint Temps Réel Disponibilités</label><input type="text" class="form-control" value="GET /api/v1/public/disponibilites?train=201" readonly></div>
+                        <div class="card-subtitle">Cette API alimente les futures applications Front Office et Contrôleur (hors périmètre de développement du Lot 1).</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div class="card-title">Simulateur Terminal Contrôleur à bord</div></div>
+                        <div class="form-group"><label>Scanner N° Billet / Scannage QR Code</label><input type="text" class="form-control" placeholder="Ex: TK-8831"></div>
+                        <button class="btn btn-primary" onclick="document.getElementById('ctrl-res').style.display='block';"><i class="fa-solid fa-check"></i> Contrôler le Billet</button>
+                        <div id="ctrl-res" style="display:none; margin-top:15px;" class="card">
+                            <span class="badge badge-success">VALIDE</span> — Voyageur : M. Ondo — Voiture V-01 / Place 12B
+                        </div>
+                    </div>
+                </div>
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">File de Synchronisation — Zones Hors Connexion</div>
+                            <div class="card-subtitle">Ventes réalisées en gare ou à bord sans réseau, en attente de remontée vers le système central</div>
+                        </div>
+                        <span class="badge badge-warning">3 en attente</span>
+                    </div>
+                    <div class="sync-item"><span>Gare de Booué — Vente guichet #TK-9012</span><span class="badge badge-warning">En attente réseau</span></div>
+                    <div class="sync-item"><span>Contrôleur c_obame — Vente à bord #TK-9013</span><span class="badge badge-warning">En attente réseau</span></div>
+                    <div class="sync-item"><span>Gare de Lastourville — Annulation #TK-8790</span><span class="badge badge-warning">En attente réseau</span></div>
+                    <button class="btn btn-outline" style="margin-top:5px;"><i class="fa-solid fa-rotate"></i> Forcer une tentative de synchronisation</button>
+                </div>
+            </div>
+
+            <!-- MODULE 8 : YIELD MANAGEMENT -->
+            <div id="mod-8" class="tab-module">
+                <div class="card">
+                    <div class="card-header"><div class="card-title">Moteur de Tarification Dynamique & Prédictif</div></div>
+                    <div class="grid grid-2">
+                        <div>
+                            <div class="form-group"><label>Règle de Yield Active</label>
+                                <select class="form-control">
+                                    <option>Saison Haute (+15% si Taux Remplissage > 80%)</option>
+                                    <option>Off-Peak / Offre Vacances (-20%)</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Ajustement Automatique selon la demande</label>
+                                <input type="text" class="form-control" value="Actif (Bascule auto vers tarif standard dès épuisement des places éco)" readonly>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="card-title">KPI Yield</div>
+                            <p style="margin-top:10px;"><strong>Recette moyenne / Siège:</strong> 22 500 FCFA</p>
+                            <p style="margin-top:5px;"><strong>Revenu Total Estimé Trajet:</strong> 14 500 000 FCFA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- JS & Interaction System -->
+    <script>
+        // ===== Popup d'introduction : fermeture manuelle uniquement =====
+        function closeIntro() {
+            const overlay = document.getElementById('introOverlay');
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.2s ease';
+            setTimeout(() => overlay.remove(), 200);
+        }
+        // Pas de fermeture au clic en dehors ni de fermeture automatique :
+        // l'utilisateur doit cliquer sur "Fermer et découvrir la démo".
+
+        // Gestion de la Navigation SPA
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-module').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            const titleMap = {
+                'mod-dashboard': 'Tableau de Bord Général',
+                'mod-1': 'Module 1 — Socle, Authentification AD & Sécurité RBAC',
+                'mod-2': 'Module 2 — Référentiels Métier (Trains, Places, Tarifs, Livrets)',
+                'mod-3': 'Module 3 — Billet Voyageur (Moteur de Vente Principal)',
+                'mod-4': 'Module 4 — Articles Annexes (Bagages, Colis Express, TAA, Funéraire)',
+                'mod-5': 'Module 5 — Contrôle, Journal Comptable SAGE X3 & Reporting',
+                'mod-6': 'Module 6 — Mode Dégradé & Ventes Manuelles Papier',
+                'mod-7': 'Module 7 — API Exposition Front-Office & Terminal Contrôleur',
+                'mod-8': 'Module 8 — Yield Management & Tarification Dynamique'
+            };
+            document.getElementById('page-title').innerText = titleMap[tabId];
+        }
+
+        // Gestion des places (Module 2)
+        document.getElementById('seatMap').addEventListener('click', (e) => {
+            const seat = e.target.closest('.seat');
+            if (!seat || seat.classList.contains('occupied')) return;
+            seat.classList.toggle('blocked');
+            seat.classList.toggle('available');
+        });
+
+        // Champs dynamiques Module 4 selon le type d'article
+        const articleFields = {
+            bagage: { billetRattache: true, poids: true, expediteur: false, destinataire: false, vignette: false, immat: false, tracking: false, action: 'Éditer Étiquette Bagage' },
+            colis:  { billetRattache: false, poids: true, expediteur: true, destinataire: true, vignette: true, immat: false, tracking: true, action: 'Éditer Étiquette Colis + Vignette' },
+            taa:    { billetRattache: true, poids: false, expediteur: false, destinataire: false, vignette: false, immat: true, tracking: false, action: 'Éditer Titre de Transport Véhicule' },
+            funeraire: { billetRattache: false, poids: false, expediteur: true, destinataire: false, vignette: false, immat: false, tracking: false, action: 'Éditer Titre Transport Funéraire' }
+        };
+        function switchArticle(type, evt) {
+            document.querySelectorAll('#mod-4 .btn-outline').forEach(b => b.classList.remove('active'));
+            evt.currentTarget.classList.add('active');
+            const cfg = articleFields[type];
+            const map = {
+                billetRattache: 'field-billetRattache', poids: 'field-poids', expediteur: 'field-expediteur',
+                destinataire: 'field-destinataire', vignette: 'field-vignette', immat: 'field-immat', tracking: 'field-tracking'
+            };
+            Object.keys(map).forEach(k => {
+                document.getElementById(map[k]).style.display = cfg[k] ? 'block' : 'none';
+            });
+            document.getElementById('btn-article-action').innerHTML = '<i class="fa-solid fa-tag"></i> ' + cfg.action;
+        }
+
+        // Mode Sombre / Clair
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', targetTheme);
+        }
+
+        // Initialisation des Graphiques
+        window.onload = function() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Guichet Gare', 'Mobile Money (Airtel/Moov)', 'Web Front-Office', 'Agences Accréditées'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#64748b']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            const ctx2 = document.getElementById('volumeChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['2020', '2021', '2022', '2023*', '2024'],
+                    datasets: [
+                        { label: 'Billets', data: [176853, 232734, 200812, 103845, 235238], backgroundColor: '#2563eb' },
+                        { label: 'Bagages', data: [74876, 92885, 76618, 39558, 95142], backgroundColor: '#10b981' },
+                        { label: 'Colis Express', data: [32865, 45208, 28494, 11994, 27448], backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { x: { stacked: true }, y: { stacked: true } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        };
+    </script>
+</body>
+</html>

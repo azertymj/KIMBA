@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optima Predict - Supervision Industrielle Multi-Sites</title>
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-main: #19202b;
+            --bg-panel: #222c3c;
+            --bg-sidebar: #121820;
+            --border-color: #2f3c52;
+            
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Barre Latérale Spécifique Multi-Sites */
+        .sidebar {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand span { color: var(--accent-green); }
+
+        .menu-title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 15px 0 8px 0;
+        }
+
+        .menu-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+
+        .menu-item a {
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .menu-item.active a, .menu-item a:hover {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .site-count {
+            font-size: 0.75rem;
+            background: var(--border-color);
+            padding: 2px 6px;
+            border-radius: 10px;
+            color: var(--text-main);
+        }
+
+        /* Contenu Principal */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            height: 60px;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-sidebar);
+        }
+
+        .dashboard-scroll {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Grille Tri-Graphiques */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .chart-box { position: relative; height: 160px; width: 100%; }
+
+        /* Double Volet : Liste Capteurs & Journal d'alertes IA */
+        .bottom-layout {
+            display: grid;
+            grid-template-columns: 1.6fr 1.4fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Table de données dynamiques */
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+        th { color: var(--text-muted); padding: 8px; border-bottom: 2px solid var(--border-color); }
+        td { padding: 10px 8px; border-bottom: 1px solid var(--border-color); }
+
+        .pulse-light {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .pulse-light.green { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+        .pulse-light.orange { background: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); }
+
+        /* Journal des événements */
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 5px;
+        }
+
+        .log-item {
+            background: rgba(18, 24, 32, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+        .badge.danger { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
+        .badge.success { background: rgba(74, 222, 128, 0.15); color: var(--accent-green); }
+
+        .btn-panel {
+            background: var(--accent-blue);
+            color: var(--bg-sidebar);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barre Latérale Interactive -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-server"></i> Optima <span>Predict</span>
+        </div>
+        
+        <p class="menu-title">Secteur Minier (Manganèse)</p>
+        <ul class="menu-list">
+            <li class="menu-item active" id="site-moanda">
+                <a href="#" onclick="switchSite('Moanda')">
+                    <span><i class="fa-solid fa-industry"></i> Mine de Moanda</span>
+                    <span class="site-count">Actif</span>
+                </a>
+            </li>
+            <li class="menu-item" id="site-ndjole">
+                <a href="#" onclick="switchSite('Ndjolé')">
+                    <span><i class="fa-solid fa-gem"></i> Chantier Ndjolé</span>
+                    <span class="site-count">Suivi</span>
+                </a>
+            </li>
+        </ul>
+
+        <p class="menu-title">Secteur Énergie & Pétrole</p>
+        <ul class="menu-list">
+            <li class="menu-item" id="site-pog">
+                <a href="#" onclick="switchSite('Port-Gentil')">
+                    <span><i class="fa-solid fa-oil-well"></i> Offshore Port-Gentil</span>
+                    <span class="site-count">Suivi</span>
+                </a>
+            </li>
+            <li class="menu-item" id="site-kinguele">
+                <a href="#" onclick="switchSite('Kinguélé')">
+                    <span><i class="fa-solid fa-bolt"></i> Barrage Kinguélé</span>
+                    <span class="site-count">Suivi</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Contenu Principal -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div style="font-size: 0.85rem;">
+                Site sélectionné : <strong id="current-site-title" style="color: var(--accent-blue);">Mine de Moanda (Gabon)</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                Algorithme Prédictif : <strong style="color: var(--accent-green);">Actif (V3.2)</strong>
+            </div>
+        </div>
+
+        <div class="dashboard-scroll">
+            
+            <!-- Rangée des Trois Graphiques Analytiques -->
+            <div class="charts-row">
+                
+                <!-- Graphique 1 : Vibrations -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span><i class="fa-solid fa-wave-square" style="color: var(--accent-orange);"></i> Analyse Vibratoire</span>
+                        <span id="header-vib" style="color: var(--accent-orange);">4.6 mm/s</span>
+                    </div>
+                    <div class="chart-box"><canvas id="chartVib"></canvas></div>
+                </div>
+
+                <!-- Graphique 2 : Température -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span><i class="fa-solid fa-temperature-high" style="color: var(--accent-red);"></i> Capteur Thermique</span>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SETRAG — Prototype Mobile Lot 2 (Vente en ligne & Contrôleur)</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{
+  --navy:#0b2a52;
+  --blue:#1d6fd6;
+  --blue-dark:#124f9e;
+  --amber:#f2a53c;
+  --green:#1fa96a;
+  --red:#e5484d;
+  --bg:#eef2f8;
+  --surface:#ffffff;
+  --text:#0f1b2d;
+  --text-soft:#5a6b82;
+  --border:#dfe6f0;
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+body{
+  background: radial-gradient(circle at 20% 0%, #163a6b 0%, #0b2140 45%, #081627 100%);
+  min-height:100vh;
+  color:var(--text);
+  padding:32px 20px 60px;
+}
+
+/* ===== POPUP INTRO ===== */
+.intro-overlay{
+  position:fixed; inset:0; background:rgba(4,10,22,0.78); backdrop-filter:blur(4px);
+  z-index:1000; display:flex; align-items:center; justify-content:center;
+  animation:fadeIn .25s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.intro-modal{
+  background:var(--surface); width:min(560px,92vw); border-radius:18px; overflow:hidden;
+  box-shadow:0 25px 60px rgba(0,0,0,.45);
+  animation:pop .3s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.intro-head{
+  background:linear-gradient(135deg,var(--navy) 0%, var(--blue) 140%);
+  color:#fff; padding:24px 28px; display:flex; gap:14px; align-items:center;
+}
+.intro-head .logo{background:var(--amber); color:#1a1200; font-weight:800; padding:10px 14px; border-radius:12px; font-size:1.2rem;}
+.intro-head h2{font-size:1.15rem;}
+.intro-head span{font-size:.8rem; opacity:.85; display:block; margin-top:2px;}
+.intro-body{padding:22px 28px 6px;}
+.intro-body p{color:var(--text-soft); font-size:.92rem; line-height:1.55; margin-bottom:14px;}
+.intro-list{list-style:none; margin-bottom:14px;}
+.intro-list li{display:flex; gap:10px; align-items:flex-start; font-size:.87rem; padding:6px 0;}
+.intro-list li i{color:var(--blue); margin-top:3px;}
+.intro-note{
+  background:rgba(242,165,60,.14); border:1px solid rgba(242,165,60,.4); color:#8a5a10;
+  border-radius:10px; padding:10px 14px; font-size:.78rem; margin-bottom:18px;
+}
+.intro-foot{padding:14px 28px 26px; display:flex; justify-content:flex-end;}
+.btn{
+  padding:11px 22px; border:none; border-radius:12px; font-weight:700; cursor:pointer;
+  display:inline-flex; align-items:center; gap:8px; font-size:.92rem; transition:.15s ease;
+}
+.btn-primary{background:var(--blue); color:#fff;}
+.btn-primary:hover{background:var(--blue-dark);}
+
+/* ===== HEADER / SWITCHER ===== */
+.page-head{max-width:1100px; margin:0 auto 26px; text-align:center; color:#fff;}
+.page-head .eyebrow{font-size:.78rem; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); font-weight:700; margin-bottom:6px;}
+.page-head h1{font-size:1.7rem; margin-bottom:8px;}
+.page-head p{color:#b9c6dc; font-size:.92rem; max-width:560px; margin:0 auto;}
+
+.switcher{
+  max-width:1100px; margin:22px auto 34px; display:flex; justify-content:center; gap:10px;
+}
+.switcher button{
+  padding:10px 20px; border-radius:999px; border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.06); color:#dce6f5; font-weight:600; font-size:.88rem; cursor:pointer;
+  display:flex; align-items:center; gap:8px; transition:.15s ease;
+}
+.switcher button.active{background:var(--blue); border-color:var(--blue); color:#fff;}
+
+.phones-wrap{
+  max-width:1100px; margin:0 auto; display:flex; gap:48px; justify-content:center; align-items:flex-start; flex-wrap:wrap;
+}
+.phone-block{display:flex; flex-direction:column; align-items:center; gap:16px;}
+.phone-block.hidden{display:none;}
+.phone-label{color:#fff; font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:8px;}
+.phone-label i{color:var(--amber);}
+
+/* ===== PHONE FRAME ===== */
+.phone{
+  width:300px; height:620px; background:#111; border-radius:42px; padding:12px;
+  box-shadow:0 30px 60px rgba(0,0,0,.5), 0 0 0 2px rgba(255,255,255,.06);
+  position:relative;
+}
+.phone .notch{
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  width:120px; height:22px; background:#111; border-radius:0 0 14px 14px; z-index:5;
+}
+.screen{
+  width:100%; height:100%; background:var(--bg); border-radius:32px; overflow:hidden;
+  position:relative; display:flex; flex-direction:column;
+}
+.status-bar{
+  height:30px; background:transparent; display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px; font-size:.72rem; font-weight:700; color:var(--text); flex-shrink:0;
+}
+.screen-body{flex:1; overflow-y:auto; padding:14px 16px 90px;}
+.app-view{display:none; flex-direction:column; height:100%;}
+.app-view.active{display:flex;}
+
+/* Bottom nav */
+.bottom-nav{
+  position:absolute; bottom:0; left:0; right:0; height:66px; background:var(--surface);
+  border-top:1px solid var(--border); display:flex; z-index:6;
+}
+.bottom-nav button{
+  flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:3px; font-size:.62rem; color:var(--text-soft); cursor:pointer; font-weight:600;
+}
+.bottom-nav button i{font-size:1.05rem;}
+.bottom-nav button.active{color:var(--blue);}
+
+/* Generic UI bits inside screens */
+.app-h1{font-size:1.2rem; font-weight:800; margin-bottom:4px; color:var(--navy);}
+.app-sub{font-size:.78rem; color:var(--text-soft); margin-bottom:16px;}
+.field{margin-bottom:12px;}
+.field label{display:block; font-size:.72rem; font-weight:700; color:var(--text-soft); margin-bottom:5px; text-transform:uppercase; letter-spacing:.3px;}
+.field input, .field select{
+  width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface); font-size:.85rem; color:var(--text);
+}
+.btn-block{
+  width:100%; padding:13px; border:none; border-radius:12px; background:var(--blue); color:#fff;
+  font-weight:700; font-size:.88rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-block.secondary{background:var(--surface); color:var(--blue); border:1.5px solid var(--blue);}
+.result-card{
+  background:var(--surface); border-radius:14px; padding:14px; margin-bottom:12px; border:1px solid var(--border);
+  display:flex; flex-direction:column; gap:6px;
+}
+.result-top{display:flex; justify-content:space-between; align-items:center;}
+.result-time{font-weight:800; font-size:1rem;}
+.result-price{font-weight:800; color:var(--blue); font-size:1rem;}
+.tag{display:inline-block; font-size:.68rem; font-weight:700; padding:3px 8px; border-radius:999px;}
+.tag-express{background:rgba(29,111,214,.12); color:var(--blue);}
+.tag-omnibus{background:rgba(31,169,106,.12); color:var(--green);}
+.chip-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+.chip{
+  padding:8px 14px; border-radius:999px; border:1.5px solid var(--border); font-size:.78rem; font-weight:700; cursor:pointer; color:var(--text-soft);
+}
+.chip.selected{border-color:var(--blue); color:var(--blue); background:rgba(29,111,214,.08);}
+.summary-line{display:flex; justify-content:space-between; font-size:.83rem; padding:8px 0; border-bottom:1px dashed var(--border);}
+.summary-line strong{font-weight:800;}
+.ticket-card{
+  background:linear-gradient(135deg,var(--navy),var(--blue-dark)); color:#fff; border-radius:16px; padding:18px; margin-bottom:16px;
+}
+.ticket-card .r{display:flex; justify-content:space-between; font-size:.8rem; padding:4px 0; opacity:.92;}
+.qr-box{background:#fff; border-radius:12px; padding:16px; display:flex; align-items:center; justify-content:center; margin:14px 0;}
+.success-icon{
+  width:64px; height:64px; border-radius:50%; background:rgba(31,169,106,.12); color:var(--green);
+  display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 14px;
+}
+.center{text-align:center;}
+
+/* Contrôleur specific */
+.login-avatar{width:70px; height:70px; border-radius:50%; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; margin:20px auto 6px; font-size:1.6rem;}
+.dash-hero{background:linear-gradient(135deg,var(--navy),var(--blue-dark)); color:#fff; border-radius:16px; padding:16px; margin-bottom:16px;}
+.dash-hero .r1{display:flex; justify-content:space-between; align-items:center; font-size:.8rem; opacity:.85;}
+.dash-hero .r2{font-size:1.4rem; font-weight:800; margin:6px 0;}
+.action-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+.action-tile{
+  background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; cursor:pointer;
+}
+.action-tile i{font-size:1.3rem; color:var(--blue); margin-bottom:6px; display:block;}
+.action-tile span{font-size:.74rem; font-weight:700; color:var(--text);}
+.scan-frame{
+  aspect-ratio:1; background:#0b1220; border-radius:16px; display:flex; align-items:center; justify-content:center;
+  color:#4a9eff; font-size:3rem; margin-bottom:16px; position:relative; overflow:hidden;
+}
+.scan-frame::after{
+  content:""; position:absolute; left:8%; right:8%; top:50%; height:2px; background:#4a9eff; box-shadow:0 0 12px #4a9eff;
+  animation:scan 1.8s ease-in-out infinite;
+}
+@keyframes scan{0%,100%{top:12%} 50%{top:88%}}
+.valid-banner{background:rgba(31,169,106,.12); color:var(--green); border-radius:12px; padding:12px; font-weight:700; font-size:.85rem; display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+.invalid-banner{background:rgba(229,72,77,.12); color:var(--red); border-radius:12px; padding:12px; font-weight:700; font-size:.85rem; display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+.history-item{display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--border); font-size:.8rem;}
+.history-status{font-size:.68rem; font-weight:800; padding:3px 9px; border-radius:999px;}
+.st-valid{background:rgba(31,169,106,.12); color:var(--green);}
+.st-partial{background:rgba(242,165,60,.15); color:#a3690f;}
+.st-invalid{background:rgba(229,72,77,.12); color:var(--red);}
+.info-row{display:flex; gap:12px; align-items:center; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:10px;}
+.info-row i{color:var(--blue); font-size:1.1rem; width:20px;}
+.footnote{text-align:center; color:#7d90ab; font-size:.78rem; margin-top:28px;}
+
+/* Choix du siège (App Client) */
+.wagon-illustration{
+  background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:14px;
+}
+.wagon-front{
+  display:flex; align-items:center; justify-content:center; gap:8px; color:var(--text-soft);
+  font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px;
+  padding-bottom:10px; border-bottom:1px dashed var(--border);
+}
+.wagon-rows{display:flex; flex-direction:column; gap:8px;}
+.wagon-row{display:grid; grid-template-columns:1fr 1fr 22px 1fr 1fr; gap:6px; align-items:center;}
+.wagon-row .aisle{color:var(--text-soft); text-align:center; font-size:.65rem;}
+.wseat{
+  aspect-ratio:1; border-radius:8px; border:1.5px solid var(--border); background:var(--bg);
+  display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:800; color:var(--text-soft);
+  cursor:pointer; transition:.12s ease;
+}
+.wseat.occupied{background:#e4e8ee; color:#aab3c0; cursor:not-allowed; border-color:#e4e8ee;}
+.wseat.available:hover{border-color:var(--blue); color:var(--blue);}
+.wseat.selected{background:var(--blue); border-color:var(--blue); color:#fff;}
+.seat-legend{display:flex; gap:14px; justify-content:center; margin-top:14px; font-size:.68rem; color:var(--text-soft);}
+.seat-legend span{display:flex; align-items:center; gap:5px;}
+.legend-dot{width:12px; height:12px; border-radius:4px; display:inline-block;}
+.seat-selected-banner{
+  background:rgba(29,111,214,.08); border:1px solid rgba(29,111,214,.25); color:var(--blue-dark);
+  border-radius:12px; padding:10px 14px; font-size:.8rem; font-weight:700; margin-bottom:14px; text-align:center;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== POPUP D'INTRODUCTION ===== -->
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-modal">
+    <div class="intro-head">
+      <div class="logo">S</div>
+      <div>
+        <h2>Prototype de démonstration — Lot 2</h2>
+        <span>ONE-J TECH · Vente en ligne & Application Contrôleur</span>
+      </div>
+    </div>
+    <div class="intro-body">
+      <p>Cet écran présente, au format mobile, un <strong>prototype interactif</strong> des deux applications visées par le Lot 2 : l'application web/mobile client destinée aux voyageurs, et l'application mobile Contrôleur destinée aux agents à bord.</p>
+      <ul class="intro-list">
+        <li><i class="fa-solid fa-magnifying-glass"></i> Recherche, sélection et paiement d'un billet en ligne (App Client)</li>
+        <li><i class="fa-solid fa-chair"></i> Choix visuel de la place assise dans le wagon (App Client)</li>
+        <li><i class="fa-solid fa-qrcode"></i> Scan et validation des titres de transport à bord (App Contrôleur)</li>
+        <li><i class="fa-solid fa-money-check-dollar"></i> Perception d'amende et rédaction de procès-verbal</li>
+        <li><i class="fa-solid fa-triangle-exclamation"></i> Signalement d'incidents et consultation des infos voyageurs</li>
+      </ul>
+      <div class="intro-note">
+        <i class="fa-solid fa-circle-info"></i>
+        Les écrans sont navigables : utilisez les onglets en bas de chaque téléphone ou les boutons d'action pour parcourir le parcours complet. Données et montants fictifs, à but de démonstration uniquement.
+      </div>
+    </div>
+    <div class="intro-foot">
+      <button class="btn btn-primary" onclick="closeIntro()"><i class="fa-solid fa-xmark"></i> Fermer et découvrir la démo</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-head">
+  <div class="eyebrow">ONE-J TECH · Prototype Lot 2</div>
+  <h1>Vente en ligne & Application Contrôleur</h1>
+  <p>Démonstration mobile des deux applications Front Office proposées pour la SETRAG — parcours voyageur et parcours contrôleur.</p>
+</div>
+
+<div class="switcher">
+  <button class="active" id="swClient" onclick="showPhone('client')"><i class="fa-solid fa-ticket"></i> Application Client</button>
+  <button id="swControl" onclick="showPhone('controleur')"><i class="fa-solid fa-user-shield"></i> Application Contrôleur</button>
+</div>
+
+<div class="phones-wrap">
+
+  <!-- ============ PHONE 1 : APPLICATION CLIENT ============ -->
+  <div class="phone-block" id="blockClient">
+    <div class="phone-label"><i class="fa-solid fa-mobile-screen-button"></i> Application Web & Mobile Client</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+        <div class="screen-body">
+
+          <!-- Accueil -->
+          <div class="app-view active" id="c-accueil">
+            <div class="app-h1">Bonjour 👋</div>
+            <div class="app-sub">Où souhaitez-vous voyager aujourd'hui ?</div>
+            <div class="field"><label>Départ</label><select><option>Owendo</option><option>N'Djolé</option></select></div>
+            <div class="field"><label>Arrivée</label><select><option>Franceville</option><option>Booué</option></select></div>
+            <div class="field"><label>Date</label><input type="date" value="2026-07-25"></div>
+            <div class="field"><label>Passagers</label><input type="number" value="1" min="1"></div>
+            <button class="btn-block" onclick="goClient('c-resultats')"><i class="fa-solid fa-magnifying-glass"></i> Rechercher un train</button>
+          </div>
+
+          <!-- Résultats -->
+          <div class="app-view" id="c-resultats">
+            <div class="app-h1">3 trains disponibles</div>
+            <div class="app-sub">Owendo → Franceville · 25 juil. 2026</div>
+            <div class="result-card">
+              <div class="result-top"><span class="result-time">06:00 → 16:30</span><span class="result-price">25 000 F</span></div>
+              <div><span class="tag tag-express">Express</span></div>
+              <button class="btn-block secondary" onclick="goClient('c-details')" style="margin-top:8px;">Sélectionner ce train</button>
+            </div>
+            <div class="result-card">
+              <div class="result-top"><span class="result-time">08:30 → 21:10</span><span class="result-price">18 000 F</span></div>
+              <div><span class="tag tag-omnibus">Omnibus</span></div>
+              <button class="btn-block secondary" onclick="goClient('c-details')" style="margin-top:8px;">Sélectionner ce train</button>
+            </div>
+            <div class="result-card">
+              <div class="result-top"><span class="result-time">13:00 → 23:40</span><span class="result-price">25 000 F</span></div>
+              <div><span class="tag tag-express">Express</span></div>
+              <button class="btn-block secondary" onclick="goClient('c-details')" style="margin-top:8px;">Sélectionner ce train</button>
+            </div>
+          </div>
+
+          <!-- Détails billet -->
+          <div class="app-view" id="c-details">
+            <div class="app-h1">Détails du billet</div>
+            <div class="app-sub">Train 201 Express · 06:00 → 16:30</div>
+            <div class="field"><label>Classe</label>
+              <div class="chip-row">
+                <div class="chip selected">2ème</div><div class="chip">1ère</div><div class="chip">VIP</div>
+              </div>
+            </div>
+            <div class="field"><label>Nom du passager</label><input placeholder="Jean Ondo"></div>
+            <div class="field"><label>Téléphone</label><input placeholder="+241 07 00 00 00"></div>
+            <div class="field"><label>Options</label>
+              <div class="chip-row"><div class="chip selected">Place assise</div><div class="chip">Assurance voyage</div></div>
+            </div>
+            <button class="btn-block" onclick="goClient('c-sieges')"><i class="fa-solid fa-arrow-right"></i> Continuer vers le choix du siège</button>
+          </div>
+
+          <!-- Choix du siège -->
+          <div class="app-view" id="c-sieges">
+            <div class="app-h1">Choisissez votre place</div>
+            <div class="app-sub">Voiture V-01 · 2ème classe · Owendo → Franceville</div>
+
+            <div class="wagon-illustration">
+              <div class="wagon-front"><i class="fa-solid fa-train"></i> Avant du wagon</div>
+              <div class="wagon-rows" id="seatGrid">
+                <div class="wagon-row">
+                  <div class="wseat occupied" data-seat="1A">1A</div><div class="wseat occupied" data-seat="1B">1B</div>
+                  <div class="aisle">▪</div>
+                  <div class="wseat available" data-seat="1C">1C</div><div class="wseat available" data-seat="1D">1D</div>
+                </div>
+                <div class="wagon-row">
+                  <div class="wseat available" data-seat="2A">2A</div><div class="wseat available" data-seat="2B">2B</div>
+                  <div class="aisle">▪</div>
+                  <div class="wseat available" data-seat="2C">2C</div><div class="wseat occupied" data-seat="2D">2D</div>
+                </div>
+                <div class="wagon-row">
+                  <div class="wseat available" data-seat="3A">3A</div><div class="wseat occupied" data-seat="3B">3B</div>
+                  <div class="aisle">▪</div>
+                  <div class="wseat available" data-seat="3C">3C</div><div class="wseat available" data-seat="3D">3D</div>
+                </div>
+                <div class="wagon-row">
+                  <div class="wseat available" data-seat="4A">4A</div><div class="wseat available" data-seat="4B">4B</div>
+                  <div class="aisle">▪</div>
+                  <div class="wseat available" data-seat="4C">4C</div><div class="wseat available" data-seat="4D">4D</div>
+                </div>
+                <div class="wagon-row">
+                  <div class="wseat available" data-seat="5A">5A</div><div class="wseat available" data-seat="5B">5B</div>
+                  <div class="aisle">▪</div>
+                  <div class="wseat occupied" data-seat="5C">5C</div><div class="wseat available" data-seat="5D">5D</div>
+                </div>
+              </div>
+              <div class="seat-legend">
+                <span><i class="legend-dot" style="background:var(--bg); border:1.5px solid var(--border);"></i> Disponible</span>
+                <span><i class="legend-dot" style="background:#e4e8ee;"></i> Occupée</span>
+                <span><i class="legend-dot" style="background:var(--blue);"></i> Sélectionnée</span>
+              </div>
+            </div>
+
+            <div class="seat-selected-banner" id="seatBanner"><i class="fa-solid fa-chair"></i> Aucune place sélectionnée pour l'instant</div>
+            <button class="btn-block" id="btn-confirm-seat" onclick="goClient('c-paiement')" disabled><i class="fa-solid fa-arrow-right"></i> Continuer vers le paiement</button>
+          </div>
+          <div class="app-view" id="c-paiement">
+            <div class="app-h1">Paiement</div>
+            <div class="app-sub">Total à régler : 25 000 FCFA</div>
+            <div class="summary-line"><span>Place réservée</span><strong>Voiture V-01, siège <span class="seat-echo">à choisir</span></strong></div>
+            <div class="field"><label>Méthode de paiement</label>
+              <div class="chip-row">
+                <div class="chip selected">Airtel Money</div><div class="chip">Moov Money</div><div class="chip">Carte bancaire</div>
+              </div>
+            </div>
+            <div class="field"><label>Numéro de téléphone</label><input placeholder="074 00 00 00"></div>
+            <div class="field" style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" checked style="width:auto;"> <span style="font-size:.78rem; color:var(--text-soft);">J'accepte les conditions générales de vente</span>
+            </div>
+            <button class="btn-block" onclick="goClient('c-confirmation')"><i class="fa-solid fa-lock"></i> Payer 25 000 FCFA</button>
+          </div>
+
+          <!-- Confirmation -->
+          <div class="app-view" id="c-confirmation">
+            <div class="center">
+              <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+              <div class="app-h1">Paiement confirmé !</div>
+              <div class="app-sub">Réservation n° RS-88213-GA</div>
+            </div>
+            <div class="ticket-card">
+              <div class="r"><span>Trajet</span><strong>Owendo → Franceville</strong></div>
+              <div class="r"><span>Train</span><strong>201 Express</strong></div>
+              <div class="r"><span>Classe</span><strong>2ème classe</strong></div>
+              <div class="r"><span>Place</span><strong>Voiture V-01, siège <span class="seat-echo">à choisir</span></strong></div>
+              <div class="r"><span>Passager</span><strong>Jean Ondo</strong></div>
+            </div>
+            <div class="qr-box"><i class="fa-solid fa-qrcode" style="font-size:70px; color:#111;"></i></div>
+            <button class="btn-block"><i class="fa-solid fa-download"></i> Télécharger le billet (PDF)</button>
+            <button class="btn-block secondary" style="margin-top:8px;" onclick="goClient('c-accueil')"><i class="fa-solid fa-house"></i> Retour à l'accueil</button>
+          </div>
+
+        </div>
+        <div class="bottom-nav">
+          <button class="active" data-c="c-accueil" onclick="clientTab('c-accueil', this)"><i class="fa-solid fa-house"></i>Accueil</button>
+          <button data-c="c-resultats" onclick="clientTab('c-resultats', this)"><i class="fa-solid fa-list"></i>Résultats</button>
+          <button data-c="c-details" onclick="clientTab('c-details', this)"><i class="fa-solid fa-ticket"></i>Billet</button>
+          <button data-c="c-sieges" onclick="clientTab('c-sieges', this)"><i class="fa-solid fa-chair"></i>Siège</button>
+          <button data-c="c-paiement" onclick="clientTab('c-paiement', this)"><i class="fa-solid fa-credit-card"></i>Paiement</button>
+          <button data-c="c-confirmation" onclick="clientTab('c-confirmation', this)"><i class="fa-solid fa-circle-check"></i>Confirm.</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHONE 2 : APPLICATION CONTRÔLEUR ============ -->
+  <div class="phone-block hidden" id="blockControl">
+    <div class="phone-label"><i class="fa-solid fa-user-shield"></i> Application Mobile Contrôleur</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+        <div class="screen-body">
+
+          <!-- Dashboard -->
+          <div class="app-view active" id="k-dashboard">
+            <div class="login-avatar" style="margin:6px auto 10px;"><i class="fa-solid fa-user"></i></div>
+            <div class="center app-sub" style="margin-bottom:14px;">Clarisse Obame · Contrôleur</div>
+            <div class="dash-hero">
+              <div class="r1"><span>Train en cours</span><span><i class="fa-solid fa-circle" style="font-size:.5rem;"></i> En ligne</span></div>
+              <div class="r2">201 — Owendo → Franceville</div>
+              <div class="r1"><span>Prochain arrêt</span><span>Booué · 11:20</span></div>
+            </div>
+            <div class="action-grid">
+              <div class="action-tile" onclick="controlTab('k-scanner', null)"><i class="fa-solid fa-qrcode"></i><span>Contrôler billet</span></div>
+              <div class="action-tile" onclick="controlTab('k-historique', null)"><i class="fa-solid fa-clock-rotate-left"></i><span>Billets régularisés</span></div>
+              <div class="action-tile" onclick="controlTab('k-signalement', null)"><i class="fa-solid fa-triangle-exclamation"></i><span>Signalement</span></div>
+              <div class="action-tile" onclick="controlTab('k-voyageurs', null)"><i class="fa-solid fa-circle-info"></i><span>Infos voyageurs</span></div>
+            </div>
+          </div>
+
+          <!-- Scanner -->
+          <div class="app-view" id="k-scanner">
+            <div class="app-h1">Contrôle du billet</div>
+            <div class="app-sub">Scannez le QR code ou saisissez le n° de billet</div>
+            <div class="scan-frame"><i class="fa-solid fa-qrcode"></i></div>
+            <div class="field"><label>N° Billet</label><input placeholder="TK-20260723-9921"></div>
+            <div class="valid-banner"><i class="fa-solid fa-circle-check"></i> Billet valide — Jean Ondo, Voiture V-01, Place 12B</div>
+            <button class="btn-block"><i class="fa-solid fa-check"></i> Valider le contrôle</button>
+            <button class="btn-block secondary" style="margin-top:8px;"><i class="fa-solid fa-money-check-dollar"></i> Percevoir une amende</button>
+          </div>
+
+          <!-- Historique -->
+          <div class="app-view" id="k-historique">
+            <div class="app-h1">Historique & suivi</div>
+            <div class="app-sub">42 billets contrôlés depuis le départ</div>
+            <div class="history-item"><span>TK-9921 · V01-12B</span><span class="history-status st-valid">Valide</span></div>
+            <div class="history-item"><span>TK-9902 · V02-04A</span><span class="history-status st-partial">Régularisé</span></div>
+            <div class="history-item"><span>TK-9887 · V01-08C</span><span class="history-status st-valid">Valide</span></div>
+            <div class="history-item"><span>TK-9880 · V02-11B</span><span class="history-status st-invalid">Invalide (PV rédigé)</span></div>
+            <div class="history-item"><span>TK-9875 · V01-03A</span><span class="history-status st-valid">Valide</span></div>
+          </div>
+
+          <!-- Signalement -->
+          <div class="app-view" id="k-signalement">
+            <div class="app-h1">Signalement</div>
+            <div class="app-sub">Remonter un incident au centre de supervision</div>
+            <div class="field"><label>Type d'incident</label>
+              <select><option>Comportement suspect</option><option>Bagarre / altercation</option><option>Anomalie technique</option></select>
+            </div>
+            <div class="field"><label>Localisation</label><input placeholder="Voiture V-02, entre Booué et Lastourville"></div>
+            <div class="field"><label>Description</label><input placeholder="Détails de la situation"></div>
+            <button class="btn-block" style="background:var(--red);"><i class="fa-solid fa-paper-plane"></i> Envoyer au centre de supervision</button>
+          </div>
+
+          <!-- Infos voyageurs -->
+          <div class="app-view" id="k-voyageurs">
+            <div class="app-h1">Informations voyageurs</div>
+            <div class="info-row"><i class="fa-solid fa-clock"></i><span>Retard estimé de 12 min à l'arrivée à Franceville</span></div>
+            <div class="info-row"><i class="fa-solid fa-route"></i><span>Correspondance disponible en gare de Booué (Omnibus 102)</span></div>
+            <div class="info-row"><i class="fa-solid fa-utensils"></i><span>Voiture-bar disponible en V-03 (VIP)</span></div>
+            <div class="info-row"><i class="fa-solid fa-circle-question"></i><span>Réclamation voyageur : formulaire disponible sur demande</span></div>
+          </div>
+
+        </div>
+        <div class="bottom-nav">
+          <button class="active" data-k="k-dashboard" onclick="controlTab('k-dashboard', this)"><i class="fa-solid fa-gauge"></i>Dashboard</button>
+          <button data-k="k-scanner" onclick="controlTab('k-scanner', this)"><i class="fa-solid fa-qrcode"></i>Scanner</button>
+          <button data-k="k-historique" onclick="controlTab('k-historique', this)"><i class="fa-solid fa-clock-rotate-left"></i>Historique</button>
+          <button data-k="k-signalement" onclick="controlTab('k-signalement', this)"><i class="fa-solid fa-triangle-exclamation"></i>Alerte</button>
+          <button data-k="k-voyageurs" onclick="controlTab('k-voyageurs', this)"><i class="fa-solid fa-circle-info"></i>Infos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footnote">ONE-J TECH — Prototype non connecté, données fictives à but de démonstration.</div>
+
+<script>
+function closeIntro(){
+  const o = document.getElementById('introOverlay');
+  o.style.transition='opacity .2s ease'; o.style.opacity='0';
+  setTimeout(()=>o.remove(),200);
+}
+
+function showPhone(which){
+  document.getElementById('blockClient').classList.toggle('hidden', which!=='client');
+  document.getElementById('blockControl').classList.toggle('hidden', which!=='controleur');
+  document.getElementById('swClient').classList.toggle('active', which==='client');
+  document.getElementById('swControl').classList.toggle('active', which==='controleur');
+}
+
+function goClient(viewId){
+  document.querySelectorAll('#blockClient .app-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  document.querySelectorAll('#blockClient .bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.c===viewId));
+}
+function clientTab(viewId, btn){ goClient(viewId); }
+
+// Sélection de siège dans le wagon
+let selectedSeat = null;
+document.getElementById('seatGrid').addEventListener('click', (e)=>{
+  const seat = e.target.closest('.wseat');
+  if(!seat || seat.classList.contains('occupied')) return;
+  document.querySelectorAll('#seatGrid .wseat.selected').forEach(s=>{ s.classList.remove('selected'); s.classList.add('available'); });
+  seat.classList.remove('available');
+  seat.classList.add('selected');
+  selectedSeat = seat.dataset.seat;
+  document.getElementById('seatBanner').innerHTML = '<i class="fa-solid fa-chair"></i> Place sélectionnée : Voiture V-01, siège ' + selectedSeat;
+  document.getElementById('btn-confirm-seat').disabled = false;
+  // Répercute le siège choisi sur le récapitulatif de paiement et le billet final
+  document.querySelectorAll('.seat-echo').forEach(el => el.textContent = selectedSeat);
+});
+
+function controlTab(viewId, btn){
+  document.querySelectorAll('#blockControl .app-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  document.querySelectorAll('#blockControl .bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.k===viewId));
+}
+</script>
+</body>
+</html>
