@@ -4,9 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SENTINEL MINE — Maintenance Prédictive IoT</title>
-<link rel="stylesheet" href="Style.css">
+<link rel="stylesheet" href="style.css">
 </head>
-<body data-theme="dark">
+<body data-theme="dark" class="app-locked">
+
+<!-- ============ ÉCRAN DE CONNEXION ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark"></div>
+      <div class="brand-copy">
+        <h1>SENTINEL</h1>
+        <span>Mine &amp; Énergie · IoT</span>
+      </div>
+    </div>
+
+    <div class="login-status"><span class="live-dot"></span> Connexion sécurisée au serveur de supervision</div>
+
+    <h2>Accès à la plateforme</h2>
+    <p class="login-sub">Connectez-vous pour accéder à la supervision des capteurs IoT et au moteur de maintenance prédictive.</p>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="login-field">
+        <label>Identifiant</label>
+        <input type="text" placeholder="ex : superviseur.moanda">
+      </div>
+      <div class="login-field">
+        <label>Mot de passe</label>
+        <input type="password" placeholder="••••••••••">
+      </div>
+      <div class="login-remember">
+        <label><input type="checkbox" checked> Rester connecté</label>
+        <a href="#" onclick="return false;" style="color:var(--text-dim);">Mot de passe oublié ?</a>
+      </div>
+      <button type="submit" class="btn-login" id="btnLogin">
+        <span class="login-spinner"></span>
+        <span class="login-label">Connexion test</span>
+      </button>
+    </form>
+
+    <div class="login-divider">environnement de démonstration</div>
+    <div class="login-foot">
+      Aucune authentification réelle n'est requise ici.<br>
+      Cliquez sur <b>Connexion test</b> pour explorer le tableau de bord.
+    </div>
+  </div>
+</div>
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 

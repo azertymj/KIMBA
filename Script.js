@@ -669,3 +669,29 @@ for(let i=0;i<10;i++) updateGlobalHistories(); // pré-remplir le graphique temp
 renderHistoryCharts();
 renderEverything();
 setInterval(tick, 2000);
+
+/* ---------------------------------------------------------
+   21. ÉCRAN DE CONNEXION (fausse authentification de démo)
+--------------------------------------------------------- */
+const loginForm = document.getElementById('loginForm');
+const loginScreen = document.getElementById('loginScreen');
+const btnLogin = document.getElementById('btnLogin');
+
+if(loginForm){
+  loginForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    if(btnLogin.classList.contains('loading')) return;
+    btnLogin.classList.add('loading');
+    btnLogin.disabled = true;
+
+    // Simule une vérification serveur avant l'accès au tableau de bord
+    setTimeout(()=>{
+      document.body.classList.remove('app-locked');
+      loginScreen.classList.add('hide');
+      pushToast('Connexion réussie — bienvenue sur SENTINEL MINE');
+      setTimeout(()=> drawRealtimeChart(), 450); // recalcule le canvas une fois visible
+      btnLogin.classList.remove('loading');
+      btnLogin.disabled = false;
+    }, 900);
+  });
+}
