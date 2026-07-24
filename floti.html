@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOTIS — Supervision de Flotte de Véhicules</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#f3f6f4;
+  --surface:#ffffff;
+  --surface-soft:#eef3f0;
+  --border:#e2e8e4;
+  --text:#132018;
+  --text-soft:#647266;
+  --emerald:#0f8a5f;
+  --emerald-dim:rgba(15,138,95,.10);
+  --emerald-dark:#0b6a49;
+  --amber:#e08a1e;
+  --amber-dim:rgba(224,138,30,.12);
+  --red:#d94a4a;
+  --red-dim:rgba(217,74,74,.10);
+  --blue:#2f6fed;
+  --blue-dim:rgba(47,111,237,.10);
+  --radius:14px;
+  --mono:'JetBrains Mono', monospace;
+  --sans:'Manrope', system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--sans);}
+body{background:var(--bg); color:var(--text); display:flex; height:100vh; overflow:hidden;}
+
+/* ===== POPUP D'INTRODUCTION ===== */
+.intro-overlay{
+  position:fixed; inset:0; background:rgba(10,20,15,0.72); backdrop-filter:blur(3px);
+  z-index:1000; display:flex; align-items:center; justify-content:center;
+  animation:overlayFade .25s ease;
+}
+@keyframes overlayFade{from{opacity:0}to{opacity:1}}
+.intro-modal{
+  background:var(--surface); width:min(560px,90vw); border-radius:16px; overflow:hidden;
+  box-shadow:0 25px 55px rgba(0,0,0,.35); animation:modalPop .3s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes modalPop{from{opacity:0; transform:translateY(14px) scale(.97)} to{opacity:1; transform:translateY(0) scale(1)}}
+.intro-head{
+  background:linear-gradient(135deg,var(--emerald-dark) 0%, var(--emerald) 140%); color:#fff;
+  padding:22px 26px; display:flex; align-items:center; gap:14px;
+}
+.intro-head .mark{
+  width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.15);
+  display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+}
+.intro-head h2{font-size:1.15rem; font-weight:800;}
+.intro-head span{font-size:.8rem; opacity:.85; display:block; margin-top:2px;}
+.intro-body{padding:24px 26px 8px;}
+.intro-body p{color:var(--text-soft); font-size:.92rem; line-height:1.55; margin-bottom:14px;}
+.intro-list{list-style:none; margin-bottom:16px;}
+.intro-list li{display:flex; align-items:flex-start; gap:10px; font-size:.87rem; padding:6px 0; color:var(--text);}
+.intro-list li i{color:var(--emerald-dark); margin-top:3px;}
+.intro-note{
+  background:var(--amber-dim); border:1px solid rgba(224,138,30,.35); color:#8a5a10;
+  border-radius:10px; padding:10px 14px; font-size:.78rem; margin-bottom:18px;
+}
+.intro-foot{padding:16px 26px 24px; display:flex; justify-content:flex-end;}
+.intro-foot .btn{font-size:.95rem; padding:10px 22px;}
+
+.demo-banner{font-size:.72rem; color:var(--text-soft); display:flex; align-items:center; gap:6px; cursor:help;}
+.demo-banner i{color:var(--amber);}
+
+/* Sidebar */
+aside{width:260px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between;}
+.brand{padding:22px 20px; border-bottom:1px solid var(--border); display:flex; gap:12px; align-items:center;}
+.brand-mark{width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,var(--emerald),var(--emerald-dark)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.05rem;}
+.brand-name{font-weight:800; font-size:1.03rem;}
+.brand-sub{font-size:.66rem; color:var(--text-soft); font-family:var(--mono); letter-spacing:.4px;}
+
+.nav-list{list-style:none; padding:14px 10px; flex:1; overflow-y:auto;}
+.nav-section-label{font-size:.65rem; color:#9aa79c; text-transform:uppercase; letter-spacing:1px; padding:14px 12px 6px; font-weight:700;}
+.nav-item{padding:11px 13px; margin-bottom:2px; border-radius:10px; cursor:pointer; display:flex; align-items:center; gap:11px; color:var(--text-soft); font-size:.87rem; transition:.15s ease;}
+.nav-item i{width:16px; text-align:center; font-size:.85rem;}
+.nav-item:hover{background:var(--surface-soft); color:var(--text);}
+.nav-item.active{background:var(--emerald-dim); color:var(--emerald-dark); font-weight:700;}
+.nav-item .nav-badge{margin-left:auto; background:var(--red); color:#fff; font-size:.65rem; font-weight:800; padding:1px 7px; border-radius:999px;}
+
+.fleet-picker{padding:14px; border-top:1px solid var(--border);}
+.fleet-picker label{font-size:.65rem; color:var(--text-soft); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:6px; font-weight:700;}
+.fleet-picker select{width:100%; background:var(--surface-soft); border:1px solid var(--border); color:var(--text); padding:9px 10px; border-radius:9px; font-size:.82rem;}
+
+/* Main */
+main{flex:1; display:flex; flex-direction:column; overflow:hidden;}
+header{padding:16px 26px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface);}
+.header-title{font-size:1.25rem; font-weight:800;}
+.header-sub{font-size:.78rem; color:var(--text-soft); margin-top:2px;}
+.header-actions{display:flex; align-items:center; gap:12px;}
+.live-pill{display:flex; align-items:center; gap:7px; background:var(--emerald-dim); color:var(--emerald-dark); padding:6px 12px; border-radius:999px; font-size:.75rem; font-weight:700;}
+.live-dot{width:7px; height:7px; border-radius:50%; background:var(--emerald); animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1} 50%{opacity:.35}}
+.btn{padding:9px 16px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:.83rem; display:inline-flex; align-items:center; gap:8px; transition:.15s ease;}
+.btn-em{background:var(--emerald); color:#fff;}
+.btn-em:hover{background:var(--emerald-dark);}
+.btn-outline{background:transparent; border:1px solid var(--border); color:var(--text);}
+.btn-outline:hover{background:var(--surface-soft);}
+
+.content{flex:1; overflow-y:auto; padding:24px 26px;}
+.view{display:none; animation:fadeIn .25s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
+
+.grid{display:grid; gap:18px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-a{grid-template-columns:2fr 1fr;}
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:0 1px 2px rgba(19,32,24,.04);}
+.card-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+.card-title{font-size:.95rem; font-weight:700;}
+.card-sub{font-size:.74rem; color:var(--text-soft); margin-top:2px;}
+
+.kpi-label{font-size:.72rem; color:var(--text-soft); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:10px;}
+.kpi-value{font-family:var(--mono); font-size:1.8rem; font-weight:700;}
+.kpi-value.em{color:var(--emerald-dark);}
+.kpi-value.amber{color:var(--amber);}
+.kpi-value.red{color:var(--red);}
+.kpi-delta{font-size:.75rem; margin-top:8px; font-weight:600;}
+.kpi-delta.up{color:var(--emerald-dark);}
+.kpi-delta.down{color:var(--red);}
+
+.mono{font-family:var(--mono);}
+.tag{padding:4px 10px; border-radius:999px; font-size:.68rem; font-weight:800; text-transform:uppercase;}
+.tag-ok{background:var(--emerald-dim); color:var(--emerald-dark);}
+.tag-warn{background:var(--amber-dim); color:var(--amber);}
+.tag-crit{background:var(--red-dim); color:var(--red);}
+.tag-info{background:var(--blue-dim); color:var(--blue);}
+
+/* Vehicle table */
+.v-table{width:100%; border-collapse:collapse; font-size:.84rem;}
+.v-table th{text-align:left; padding:10px 12px; color:var(--text-soft); font-weight:700; font-size:.71rem; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid var(--border);}
+.v-table td{padding:12px; border-bottom:1px solid var(--border); vertical-align:middle;}
+.v-table tr:hover td{background:var(--surface-soft);}
+.veh-plate{font-family:var(--mono); font-weight:800; background:var(--surface-soft); border:1px solid var(--border); border-radius:6px; padding:3px 8px; font-size:.78rem; display:inline-block;}
+.veh-model{font-weight:700; font-size:.85rem;}
+.veh-driver{font-size:.75rem; color:var(--text-soft);}
+.fuel-bar{width:90px; height:6px; background:var(--surface-soft); border-radius:4px; overflow:hidden;}
+.fuel-fill{height:100%; border-radius:4px;}
+
+/* Alert / echeance cards */
+.echeance-row{display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid var(--border);}
+.echeance-row:last-child{border-bottom:none;}
+.ech-left{display:flex; align-items:center; gap:12px;}
+.ech-icon{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.ech-icon.crit{background:var(--red-dim); color:var(--red);}
+.ech-icon.warn{background:var(--amber-dim); color:var(--amber);}
+.ech-icon.ok{background:var(--emerald-dim); color:var(--emerald-dark);}
+.ech-title{font-weight:700; font-size:.86rem;}
+.ech-sub{font-size:.74rem; color:var(--text-soft);}
+.ech-days{font-family:var(--mono); font-weight:800; font-size:.86rem; text-align:right;}
+.ech-days.crit{color:var(--red);}
+.ech-days.warn{color:var(--amber);}
+.ech-days.ok{color:var(--emerald-dark);}
+
+/* Maintenance plan */
+.plan-item{display:flex; gap:14px; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);}
+.plan-item:last-child{border-bottom:none;}
+.plan-date{width:52px; text-align:center; background:var(--surface-soft); border-radius:9px; padding:6px 0; flex-shrink:0;}
+.plan-date .d{font-family:var(--mono); font-weight:800; font-size:1rem;}
+.plan-date .m{font-size:.62rem; color:var(--text-soft); text-transform:uppercase;}
+.chip{padding:3px 9px; border-radius:999px; font-size:.68rem; font-weight:700;}
+.chip-em{background:var(--emerald-dim); color:var(--emerald-dark);}
+.chip-grey{background:var(--surface-soft); color:var(--text-soft); border:1px solid var(--border);}
+
+/* Mission map placeholder */
+.map-box{
+  height:260px; border-radius:var(--radius); background:
+    linear-gradient(0deg, rgba(15,138,95,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,138,95,.06) 1px, transparent 1px),
+    var(--surface-soft);
+  background-size:26px 26px; position:relative; overflow:hidden; border:1px solid var(--border);
+}
+.map-pin{position:absolute; width:14px; height:14px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.25);}
+.map-label{position:absolute; font-size:.68rem; font-weight:700; background:var(--surface); padding:3px 8px; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.12); transform:translate(10px,-8px);}
+</style>
+</head>
+<body>
+
+<!-- ===== POPUP D'INTRODUCTION AU PROTOTYPE (fermeture manuelle obligatoire) ===== -->
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-modal">
+    <div class="intro-head">
+      <div class="mark"><i class="fa-solid fa-truck-fast"></i></div>
+      <div>
+        <h2>Prototype de démonstration</h2>
+        <span>ONE-J TECH · FLOTIS — Supervision de Flotte</span>
+      </div>
+    </div>
+    <div class="intro-body">
+      <p>Cet écran est un <strong>prototype interactif</strong> conçu pour illustrer, module par module, ce que FLOTIS propose pour répondre aux problèmes courants de gestion de flotte : manque de visibilité, retards administratifs, maintenance mal planifiée et coûts d'exploitation mal maîtrisés.</p>
+      <ul class="intro-list">
+        <li><i class="fa-solid fa-gauge-high"></i> Vue d'ensemble en temps réel de l'état du parc (Tableau de bord)</li>
+        <li><i class="fa-solid fa-car-side"></i> Registre complet des véhicules et de leur disponibilité</li>
+        <li><i class="fa-solid fa-file-shield"></i> Alertes automatiques sur les échéances administratives</li>
+        <li><i class="fa-solid fa-screwdriver-wrench"></i> Planification de la maintenance et suivi des coûts</li>
+        <li><i class="fa-solid fa-gas-pump"></i> Suivi du carburant et détection d'anomalies de consommation</li>
+      </ul>
+      <div class="intro-note">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Les données affichées (véhicules, coûts, échéances) sont fictives et servent uniquement à illustrer le fonctionnement de l'outil. Ce prototype n'est pas connecté à un système en production.
+      </div>
+    </div>
+    <div class="intro-foot">
+      <button class="btn btn-em" onclick="closeIntro()"><i class="fa-solid fa-xmark"></i> Fermer et découvrir la démo</button>
+    </div>
+  </div>
+</div>
+
+<aside>
+  <div>
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-truck-fast"></i></div>
+      <div>
+        <div class="brand-name">FLOTIS</div>
+        <div class="brand-sub">SUPERVISION DE FLOTTE</div>
+      </div>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-section-label">Vue d'ensemble</li>
+      <li class="nav-item active" onclick="go('v-dash', this)"><i class="fa-solid fa-gauge-high"></i> Tableau de bord</li>
+      <li class="nav-item" onclick="go('v-vehicules', this)"><i class="fa-solid fa-car-side"></i> Véhicules</li>
+      <li class="nav-section-label">Conformité</li>
+      <li class="nav-item" onclick="go('v-docs', this)"><i class="fa-solid fa-file-shield"></i> Documents & Échéances <span class="nav-badge">5</span></li>
+      <li class="nav-section-label">Exploitation</li>
+      <li class="nav-item" onclick="go('v-maint', this)"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</li>
+      <li class="nav-item" onclick="go('v-carburant', this)"><i class="fa-solid fa-gas-pump"></i> Carburant & Kilométrage</li>
+      <li class="nav-item" onclick="go('v-missions', this)"><i class="fa-solid fa-route"></i> Missions & Chauffeurs</li>
+      <li class="nav-section-label">Pilotage</li>
+      <li class="nav-item" onclick="go('v-couts', this)"><i class="fa-solid fa-chart-pie"></i> Rapports & Coûts</li>
+    </ul>
+  </div>
+  <div class="fleet-picker">
+    <label>Parc actif</label>
+    <select>
+      <option>Flotte Administrative — Libreville</option>
+      <option>Flotte Logistique — Owendo</option>
+      <option>Flotte Terrain — Provinces</option>
+      <option>Toutes les flottes</option>
+    </select>
+  </div>
+</aside>
+
+<main>
+  <header>
+    <div>
+      <div class="header-title" id="pageTitle">Tableau de bord</div>
+      <div class="header-sub">Flotte Administrative — Libreville · 38 véhicules suivis</div>
+      <div class="demo-banner" title="Ce tableau de bord présente des données fictives à but de démonstration"><i class="fa-solid fa-circle-info"></i> Prototype de démonstration — données fictives</div>
+    </div>
+    <div class="header-actions">
+      <span class="live-pill"><span class="live-dot"></span> 34 véhicules géolocalisés</span>
+      <button class="btn btn-outline"><i class="fa-solid fa-file-export"></i> Exporter</button>
+      <button class="btn btn-em"><i class="fa-solid fa-plus"></i> Ajouter un véhicule</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ============ TABLEAU DE BORD ============ -->
+    <div class="view active" id="v-dash">
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="kpi-label">Disponibilité de la flotte</div>
+          <div class="kpi-value em">87%</div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-up"></i> +5 pts vs mois dernier</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Véhicules immobilisés</div>
+          <div class="kpi-value red">5</div>
+          <div class="kpi-delta down"><i class="fa-solid fa-arrow-down"></i> 3 en attente de pièces</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Documents expirant sous 30j</div>
+          <div class="kpi-value amber">5</div>
+          <div class="kpi-delta down">Dont 2 assurances</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Coût d'exploitation du mois</div>
+          <div class="kpi-value">6.4M<span style="font-size:.9rem; color:var(--text-soft);"> FCFA</span></div>
+          <div class="kpi-delta up"><i class="fa-solid fa-arrow-down"></i> -9% vs mois dernier</div>
+        </div>
+      </div>
+
+      <div class="grid grid-a" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Coût d'exploitation mensuel</div><div class="card-sub">Carburant + Maintenance + Assurances + Pneumatiques</div></div></div>
+          <canvas id="costChart" height="90"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Répartition des coûts (mois en cours)</div></div>
+          <canvas id="costPie" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">État instantané du parc</div><div class="card-sub">Vue consolidée disponibilité, kilométrage et échéances</div></div>
+          <button class="btn btn-outline" onclick="go('v-vehicules', document.querySelector('[onclick*=v-vehicules]'))">Voir tous les véhicules</button>
+        </div>
+        <table class="v-table">
+          <thead><tr><th>Véhicule</th><th>Chauffeur</th><th>Kilométrage</th><th>Carburant</th><th>Prochaine échéance</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="veh-plate">LBV-2201-A</span><div class="veh-model">Toyota Land Cruiser</div></td>
+              <td class="veh-driver">P. Ntoutoume</td>
+              <td class="mono">142 300 km</td>
+              <td><div class="fuel-bar"><div class="fuel-fill" style="width:72%; background:var(--emerald);"></div></div></td>
+              <td>Assurance — <span style="color:var(--red); font-weight:700;">8 jours</span></td>
+              <td><span class="tag tag-ok">Disponible</span></td>
+            </tr>
+            <tr>
+              <td><span class="veh-plate">LBV-1187-C</span><div class="veh-model">Hilux Double Cabine</div></td>
+              <td class="veh-driver">En attente d'affectation</td>
+              <td class="mono">98 450 km</td>
+              <td><div class="fuel-bar"><div class="fuel-fill" style="width:18%; background:var(--red);"></div></div></td>
+              <td>Vidange — dans 320 km</td>
+              <td><span class="tag tag-crit">Immobilisé</span></td>
+            </tr>
+            <tr>
+              <td><span class="veh-plate">LBV-0765-B</span><div class="veh-model">Nissan Patrol</div></td>
+              <td class="veh-driver">M. Ondo Nzé</td>
+              <td class="mono">211 900 km</td>
+              <td><div class="fuel-bar"><div class="fuel-fill" style="width:55%; background:var(--amber);"></div></div></td>
+              <td>Visite technique — 22 jours</td>
+              <td><span class="tag tag-warn">En mission</span></td>
+            </tr>
+            <tr>
+              <td><span class="veh-plate">LBV-3390-A</span><div class="veh-model">Toyota Hiace</div></td>
+              <td class="veh-driver">S. Mba</td>
+              <td class="mono">76 200 km</td>
+              <td><div class="fuel-bar"><div class="fuel-fill" style="width:88%; background:var(--emerald);"></div></div></td>
+              <td>Vignette — 45 jours</td>
+              <td><span class="tag tag-ok">Disponible</span></td>
+            </tr>
+            <tr>
+              <td><span class="veh-plate">LBV-4502-D</span><div class="veh-model">Toyota Corolla</div></td>
+              <td class="veh-driver">R. Ella</td>
+              <td class="mono">54 800 km</td>
+              <td><div class="fuel-bar"><div class="fuel-fill" style="width:40%; background:var(--amber);"></div></div></td>
+              <td>Carte grise — 60 jours</td>
+              <td><span class="tag tag-warn">En maintenance</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ VÉHICULES ============ -->
+    <div class="view" id="v-vehicules">
+      <div class="grid grid-3" style="margin-bottom:18px;">
+        <div class="card"><div class="kpi-label">Total véhicules suivis</div><div class="kpi-value">38</div><div class="kpi-delta">Toutes catégories confondues</div></div>
+        <div class="card"><div class="kpi-label">Âge moyen du parc</div><div class="kpi-value">6.2<span style="font-size:.9rem; color:var(--text-soft);"> ans</span></div><div class="kpi-delta down">12 véhicules &gt; 8 ans</div></div>
+        <div class="card"><div class="kpi-label">Kilométrage moyen annuel</div><div class="kpi-value">31 400<span style="font-size:.7rem;"> km</span></div><div class="kpi-delta">Par véhicule</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Registre complet du parc</div><div class="card-sub">Filtrable par statut, catégorie, site ou chauffeur affecté</div></div>
+          <div style="display:flex; gap:8px;">
+            <input placeholder="Rechercher une plaque, un modèle..." style="padding:8px 12px; border:1px solid var(--border); border-radius:9px; font-size:.82rem; width:220px;">
+          </div>
+        </div>
+        <table class="v-table">
+          <thead><tr><th>Véhicule</th><th>Catégorie</th><th>Chauffeur</th><th>Kilométrage</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td><span class="veh-plate">LBV-2201-A</span><div class="veh-model">Toyota Land Cruiser</div></td><td class="mono">4x4 Terrain</td><td class="veh-driver">P. Ntoutoume</td><td class="mono">142 300 km</td><td><span class="tag tag-ok">Disponible</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+            <tr><td><span class="veh-plate">LBV-1187-C</span><div class="veh-model">Hilux Double Cabine</div></td><td class="mono">Utilitaire</td><td class="veh-driver">—</td><td class="mono">98 450 km</td><td><span class="tag tag-crit">Immobilisé</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+            <tr><td><span class="veh-plate">LBV-0765-B</span><div class="veh-model">Nissan Patrol</div></td><td class="mono">4x4 Terrain</td><td class="veh-driver">M. Ondo Nzé</td><td class="mono">211 900 km</td><td><span class="tag tag-warn">En mission</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+            <tr><td><span class="veh-plate">LBV-3390-A</span><div class="veh-model">Toyota Hiace</div></td><td class="mono">Minibus</td><td class="veh-driver">S. Mba</td><td class="mono">76 200 km</td><td><span class="tag tag-ok">Disponible</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+            <tr><td><span class="veh-plate">LBV-4502-D</span><div class="veh-model">Toyota Corolla</div></td><td class="mono">Berline</td><td class="veh-driver">R. Ella</td><td class="mono">54 800 km</td><td><span class="tag tag-warn">En maintenance</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+            <tr><td><span class="veh-plate">LBV-5561-A</span><div class="veh-model">Ford Ranger</div></td><td class="mono">Utilitaire</td><td class="veh-driver">A. Koumba</td><td class="mono">33 100 km</td><td><span class="tag tag-ok">Disponible</span></td><td><button class="btn btn-outline"><i class="fa-solid fa-eye"></i></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ DOCUMENTS & ÉCHÉANCES ============ -->
+    <div class="view" id="v-docs">
+      <div class="card" style="margin-bottom:18px; background:var(--red-dim); border-color:rgba(217,74,74,.25);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size:1.3rem; color:var(--red);"></i>
+          <div>
+            <div style="font-weight:800; font-size:1rem; color:var(--red);">2 documents expirent sous 10 jours</div>
+            <div class="card-sub">Un renouvellement anticipé évite l'immobilisation forcée du véhicule et les sanctions administratives.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Échéances administratives à venir</div><div class="card-sub">Assurance, visite technique, vignette, carte grise, permis de conduire des chauffeurs</div></div><button class="btn btn-em"><i class="fa-solid fa-bell"></i> Configurer les alertes</button></div>
+
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon crit"><i class="fa-solid fa-file-contract"></i></div>
+            <div><div class="ech-title">Assurance — LBV-2201-A (Toyota Land Cruiser)</div><div class="ech-sub">Compagnie OGAR · Chauffeur : P. Ntoutoume</div></div>
+          </div>
+          <div class="ech-days crit">8 jours <div style="font-weight:400; font-size:.68rem;">expire le 01/08/2026</div></div>
+        </div>
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon crit"><i class="fa-solid fa-id-card"></i></div>
+            <div><div class="ech-title">Permis de conduire — M. Ondo Nzé</div><div class="ech-sub">Catégorie C · Affecté à LBV-0765-B</div></div>
+          </div>
+          <div class="ech-days crit">9 jours <div style="font-weight:400; font-size:.68rem;">expire le 02/08/2026</div></div>
+        </div>
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon warn"><i class="fa-solid fa-gauge"></i></div>
+            <div><div class="ech-title">Visite technique — LBV-0765-B (Nissan Patrol)</div><div class="ech-sub">Centre de contrôle technique de Libreville</div></div>
+          </div>
+          <div class="ech-days warn">22 jours <div style="font-weight:400; font-size:.68rem;">expire le 15/08/2026</div></div>
+        </div>
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon warn"><i class="fa-solid fa-receipt"></i></div>
+            <div><div class="ech-title">Vignette automobile — LBV-3390-A (Toyota Hiace)</div><div class="ech-sub">Direction Générale des Impôts</div></div>
+          </div>
+          <div class="ech-days warn">45 jours <div style="font-weight:400; font-size:.68rem;">expire le 07/09/2026</div></div>
+        </div>
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon ok"><i class="fa-solid fa-file-lines"></i></div>
+            <div><div class="ech-title">Carte grise — LBV-4502-D (Toyota Corolla)</div><div class="ech-sub">Renouvellement quinquennal</div></div>
+          </div>
+          <div class="ech-days ok">60 jours <div style="font-weight:400; font-size:.68rem;">expire le 22/09/2026</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MAINTENANCE ============ -->
+    <div class="view" id="v-maint">
+      <div class="grid grid-3" style="margin-bottom:18px;">
+        <div class="card"><div class="kpi-label">Interventions ce mois</div><div class="kpi-value em">11</div><div class="kpi-delta">7 préventives · 4 curatives</div></div>
+        <div class="card"><div class="kpi-label">Coût moyen par intervention</div><div class="kpi-value">184 000<span style="font-size:.7rem;"> FCFA</span></div><div class="kpi-delta down">-12% vs trimestre dernier</div></div>
+        <div class="card"><div class="kpi-label">Délai moyen d'immobilisation</div><div class="kpi-value amber">3.4<span style="font-size:.9rem; color:var(--text-soft);"> jours</span></div><div class="kpi-delta">Objectif : &lt; 2 jours</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-head"><div><div class="card-title">Planning des interventions</div><div class="card-sub">Basé sur le kilométrage, l'âge du véhicule et l'historique constructeur</div></div><button class="btn btn-em"><i class="fa-solid fa-plus"></i> Planifier une intervention</button></div>
+
+        <div class="plan-item">
+          <div class="plan-date"><div class="d">27</div><div class="m">Juil.</div></div>
+          <div style="flex:1;"><div class="veh-model">Vidange + filtres — LBV-1187-C (Hilux)</div><div class="ech-sub">Seuil kilométrique atteint (98 450 km)</div></div>
+          <span class="chip chip-em">Préventive</span>
+        </div>
+        <div class="plan-item">
+          <div class="plan-date"><div class="d">29</div><div class="m">Juil.</div></div>
+          <div style="flex:1;"><div class="veh-model">Remplacement plaquettes de frein — LBV-4502-D (Corolla)</div><div class="ech-sub">Usure détectée au dernier contrôle</div></div>
+          <span class="chip chip-grey">Curative</span>
+        </div>
+        <div class="plan-item">
+          <div class="plan-date"><div class="d">05</div><div class="m">Août</div></div>
+          <div style="flex:1;"><div class="veh-model">Révision 200 000 km — LBV-0765-B (Patrol)</div><div class="ech-sub">Révision majeure constructeur</div></div>
+          <span class="chip chip-em">Préventive</span>
+        </div>
+        <div class="plan-item">
+          <div class="plan-date"><div class="d">12</div><div class="m">Août</div></div>
+          <div style="flex:1;"><div class="veh-model">Contrôle climatisation — LBV-3390-A (Hiace)</div><div class="ech-sub">Maintenance saisonnière</div></div>
+          <span class="chip chip-em">Préventive</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Historique récent des interventions</div></div>
+        <table class="v-table">
+          <thead><tr><th>Date</th><th>Véhicule</th><th>Intervention</th><th>Coût</th><th>Atelier</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">15/07/2026</td><td class="veh-plate">LBV-5561-A</td><td>Changement pneus (4)</td><td class="mono">320 000 F</td><td>Garage CFAO Motors</td><td><span class="tag tag-ok">Terminée</span></td></tr>
+            <tr><td class="mono">09/07/2026</td><td class="veh-plate">LBV-2201-A</td><td>Vidange + révision</td><td class="mono">95 000 F</td><td>Atelier interne</td><td><span class="tag tag-ok">Terminée</span></td></tr>
+            <tr><td class="mono">02/07/2026</td><td class="veh-plate">LBV-4502-D</td><td>Diagnostic électronique</td><td class="mono">45 000 F</td><td>Garage Toyota Gabon</td><td><span class="tag tag-ok">Terminée</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ CARBURANT & KILOMÉTRAGE ============ -->
+    <div class="view" id="v-carburant">
+      <div class="grid grid-a" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Consommation de carburant — Flotte complète</div><div class="card-sub">Litres consommés par semaine, 8 dernières semaines</div></div></div>
+          <canvas id="fuelChart" height="90"></canvas>
+        </div>
+        <div class="card">
+          <div class="kpi-label">Coût carburant du mois</div>
+          <div class="kpi-value em">2.8M<span style="font-size:.9rem; color:var(--text-soft);"> FCFA</span></div>
+          <div class="kpi-delta up" style="margin-bottom:16px;"><i class="fa-solid fa-arrow-down"></i> -6% vs mois dernier</div>
+          <div class="kpi-label">Consommation moyenne</div>
+          <div class="kpi-value">11.2<span style="font-size:.8rem; color:var(--text-soft);"> L/100km</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div><div class="card-title">Anomalies de consommation détectées</div><div class="card-sub">Écarts significatifs entre kilométrage parcouru et carburant consommé</div></div></div>
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon crit"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div><div class="ech-title">LBV-0765-B (Nissan Patrol) — Surconsommation de +28%</div><div class="ech-sub">Possible fuite ou usage non conforme — à vérifier avec le chauffeur M. Ondo Nzé</div></div>
+          </div>
+          <button class="btn btn-outline">Investiguer</button>
+        </div>
+        <div class="echeance-row">
+          <div class="ech-left"><div class="ech-icon warn"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div><div class="ech-title">LBV-5561-A (Ford Ranger) — Écart de +14%</div><div class="ech-sub">À surveiller sur les prochains pleins</div></div>
+          </div>
+          <button class="btn btn-outline">Investiguer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MISSIONS & CHAUFFEURS ============ -->
+    <div class="view" id="v-missions">
+      <div class="grid grid-a" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Localisation en temps réel du parc en mission</div></div>
+          <div class="map-box">
+            <div class="map-pin" style="background:var(--emerald); top:40%; left:30%;"></div>
+            <div class="map-label" style="top:40%; left:30%;">LBV-0765-B · Route de Ntoum</div>
+            <div class="map-pin" style="background:var(--emerald); top:65%; left:55%;"></div>
+            <div class="map-label" style="top:65%; left:55%;">LBV-3390-A · Owendo</div>
+            <div class="map-pin" style="background:var(--amber); top:25%; left:68%;"></div>
+            <div class="map-label" style="top:25%; left:68%;">LBV-5561-A · Akanda</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Missions en cours</div>
+          <div class="echeance-row"><div class="ech-left"><div class="ech-icon ok"><i class="fa-solid fa-route"></i></div><div><div class="ech-title">Livraison Owendo</div><div class="ech-sub">LBV-3390-A · S. Mba</div></div></div><span class="tag tag-ok">En cours</span></div>
+          <div class="echeance-row"><div class="ech-left"><div class="ech-icon warn"><i class="fa-solid fa-route"></i></div><div><div class="ech-title">Mission terrain Ntoum</div><div class="ech-sub">LBV-0765-B · M. Ondo Nzé</div></div></div><span class="tag tag-warn">Retard estimé</span></div>
+          <div class="echeance-row"><div class="ech-left"><div class="ech-icon ok"><i class="fa-solid fa-route"></i></div><div><div class="ech-title">Ravitaillement Akanda</div><div class="ech-sub">LBV-5561-A · A. Koumba</div></div></div><span class="tag tag-ok">En cours</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Registre des chauffeurs</div></div>
+        <table class="v-table">
+          <thead><tr><th>Chauffeur</th><th>Permis</th><th>Véhicule affecté</th><th>Missions (mois)</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr><td class="veh-model">P. Ntoutoume</td><td class="mono">Cat. B — valide</td><td class="veh-plate">LBV-2201-A</td><td class="mono">14</td><td><span class="tag tag-ok">Disponible</span></td></tr>
+            <tr><td class="veh-model">M. Ondo Nzé</td><td class="mono">Cat. C — <span style="color:var(--red);">expire 9j</span></td><td class="veh-plate">LBV-0765-B</td><td class="mono">21</td><td><span class="tag tag-warn">En mission</span></td></tr>
+            <tr><td class="veh-model">S. Mba</td><td class="mono">Cat. B — valide</td><td class="veh-plate">LBV-3390-A</td><td class="mono">18</td><td><span class="tag tag-ok">En mission</span></td></tr>
+            <tr><td class="veh-model">A. Koumba</td><td class="mono">Cat. B — valide</td><td class="veh-plate">LBV-5561-A</td><td class="mono">9</td><td><span class="tag tag-ok">En mission</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============ RAPPORTS & COÛTS ============ -->
+    <div class="view" id="v-couts">
+      <div class="grid grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Évolution du coût total de possession (TCO)</div></div>
+          <canvas id="tcoChart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Coût par véhicule (mois en cours)</div></div>
+          <canvas id="costPerVehicle" height="200"></canvas>
+        </div>
+      </div>
+      <div class="grid grid-3">
+        <div class="card"><div class="kpi-label">Coût total d'exploitation (12 mois)</div><div class="kpi-value em">71.4M<span style="font-size:.8rem;"> FCFA</span></div><div class="kpi-delta up">-8% vs période précédente</div></div>
+        <div class="card"><div class="kpi-label">Coût moyen par véhicule / mois</div><div class="kpi-value">168 000<span style="font-size:.7rem;"> FCFA</span></div><div class="kpi-delta">Toutes catégories</div></div>
+        <div class="card"><div class="kpi-label">Économies liées au suivi préventif</div><div class="kpi-value em">≈ 9.2M<span style="font-size:.8rem;"> FCFA</span></div><div class="kpi-delta up">Pannes évitées cette année</div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+function closeIntro(){
+  const overlay = document.getElementById('introOverlay');
+  overlay.style.transition = 'opacity 0.2s ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.remove(), 200);
+}
+// Fermeture manuelle uniquement : pas de clic en dehors, pas de fermeture automatique.
+
+function go(id, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const titles = {
+    'v-dash':'Tableau de bord', 'v-vehicules':'Véhicules', 'v-docs':'Documents & Échéances',
+    'v-maint':'Maintenance', 'v-carburant':'Carburant & Kilométrage', 'v-missions':'Missions & Chauffeurs',
+    'v-couts':'Rapports & Coûts'
+  };
+  document.getElementById('pageTitle').innerText = titles[id];
+}
+
+Chart.defaults.color = '#647266';
+Chart.defaults.borderColor = '#e2e8e4';
+Chart.defaults.font.family = 'Manrope';
+
+window.onload = function(){
+  new Chart(document.getElementById('costChart').getContext('2d'), {
+    type:'bar',
+    data:{ labels:['Fév','Mar','Avr','Mai','Juin','Juil'],
+      datasets:[{ label:'Coût (M FCFA)', data:[7.8,7.2,7.9,7.1,7.0,6.4], backgroundColor:'#0f8a5f', borderRadius:5 }] },
+    options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ grid:{ color:'#e2e8e4' } }, x:{ grid:{ display:false } } } }
+  });
+
+  new Chart(document.getElementById('costPie').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels:['Carburant','Maintenance','Assurances','Pneumatiques','Divers'],
+      datasets:[{ data:[38,29,17,10,6], backgroundColor:['#0f8a5f','#e08a1e','#2f6fed','#d94a4a','#9aa79c'] }] },
+    options:{ plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } } }
+  });
+
+  new Chart(document.getElementById('fuelChart').getContext('2d'), {
+    type:'line',
+    data:{ labels:['S1','S2','S3','S4','S5','S6','S7','S8'],
+      datasets:[{ label:'Litres', data:[1240,1310,1180,1290,1205,1150,1090,1040], borderColor:'#0f8a5f', backgroundColor:'rgba(15,138,95,.1)', fill:true, tension:.35, pointRadius:0, borderWidth:2 }] },
+    options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ grid:{ color:'#e2e8e4' } }, x:{ grid:{ display:false } } } }
+  });
+
+  new Chart(document.getElementById('tcoChart').getContext('2d'), {
+    type:'line',
+    data:{ labels:['Aoû','Sep','Oct','Nov','Déc','Jan','Fév','Mar','Avr','Mai','Juin','Juil'],
+      datasets:[{ label:'TCO cumulé (M FCFA)', data:[5.2,10.6,16.1,21.4,27.0,33.8,41.6,48.8,56.7,63.5,67.4,71.4], borderColor:'#2f6fed', backgroundColor:'rgba(47,111,237,.08)', fill:true, tension:.3, pointRadius:0, borderWidth:2 }] },
+    options:{ plugins:{ legend:{ display:false } }, scales:{ y:{ grid:{ color:'#e2e8e4' } }, x:{ grid:{ display:false } } } }
+  });
+
+  new Chart(document.getElementById('costPerVehicle').getContext('2d'), {
+    type:'bar',
+    data:{ labels:['LBV-2201-A','LBV-1187-C','LBV-0765-B','LBV-3390-A','LBV-4502-D','LBV-5561-A'],
+      datasets:[{ label:'Coût (K FCFA)', data:[210,340,285,150,190,165], backgroundColor:'#0f8a5f', borderRadius:5 }] },
+    options:{ indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ color:'#e2e8e4' } }, y:{ grid:{ display:false } } } }
+  });
+};
+</script>
+</body>
+</html>
