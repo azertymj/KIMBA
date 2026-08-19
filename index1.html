@@ -284,6 +284,32 @@ body{
 /* Payment form validation */
 .field input.input-error{border-color:var(--red); box-shadow:0 0 0 3px rgba(229,72,77,.12);}
 .error-text{color:var(--red) !important;}
+
+/* Simulateur de paiement (overlay de traitement) */
+.payment-processing{
+  position:absolute; inset:0; background:rgba(6,14,28,.94); backdrop-filter:blur(2px);
+  display:none; align-items:center; justify-content:center; z-index:20; padding:24px;
+}
+.payment-processing.active{display:flex; animation:fadeIn .2s ease;}
+.pp-card{
+  background:var(--surface); border-radius:18px; padding:26px 22px; text-align:center;
+  width:100%; max-width:220px; box-shadow:0 20px 40px rgba(0,0,0,.4);
+}
+.pp-spinner{
+  width:56px; height:56px; border-radius:50%; background:rgba(29,111,214,.12); color:var(--blue);
+  display:flex; align-items:center; justify-content:center; font-size:1.4rem; margin:0 auto 14px;
+  animation:ppPulse 1.1s ease-in-out infinite; transition:background .2s ease, color .2s ease;
+}
+@keyframes ppPulse{0%,100%{transform:scale(1);} 50%{transform:scale(1.12);}}
+.pp-spinner.done{animation:none;}
+.pp-title{font-weight:800; font-size:.95rem; color:var(--navy); margin-bottom:6px;}
+.pp-status{font-size:.78rem; color:var(--text-soft); min-height:34px; line-height:1.4;}
+.pp-dots{display:flex; gap:6px; justify-content:center; margin-top:14px;}
+.pp-dots span{width:6px; height:6px; border-radius:50%; background:var(--border); animation:ppBlink 1.2s infinite;}
+.pp-dots span:nth-child(2){animation-delay:.2s;}
+.pp-dots span:nth-child(3){animation-delay:.4s;}
+.pp-dots.done span{animation:none; background:var(--green);}
+@keyframes ppBlink{0%,80%,100%{opacity:.25;} 40%{opacity:1; background:var(--blue);}}
 </style>
 </head>
 <body>
@@ -484,6 +510,17 @@ body{
           </div>
 
         </div>
+
+        <!-- Overlay de simulation du paiement -->
+        <div class="payment-processing" id="paymentProcessing">
+          <div class="pp-card">
+            <div class="pp-spinner"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div class="pp-title">Paiement en cours</div>
+            <div class="pp-status" id="ppStatus">Connexion…</div>
+            <div class="pp-dots"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+
         <div class="bottom-nav">
           <button class="active" data-c="c-accueil" onclick="clientTab('c-accueil', this)"><i class="fa-solid fa-house"></i>Accueil</button>
           <button data-c="c-resultats" onclick="clientTab('c-resultats', this)"><i class="fa-solid fa-list"></i>Résultats</button>
@@ -779,16 +816,67 @@ function payNow(){
   if(!terms.checked){ termsLabel.classList.add('error-text'); valid = false; } else { termsLabel.classList.remove('error-text'); }
   if(!valid) return;
 
+  const methodEl = document.querySelector('#c-paiement .chip-row .chip.selected');
+  const method = methodEl ? methodEl.textContent.trim() : 'Mobile Money';
+  runPaymentSimulation(method, phone.value.trim());
+}
+
+function getPaymentSteps(method, phoneNumber){
+  if(method === 'Carte bancaire'){
+    return [
+      {text:'Vérification des informations de la carte…', delay:700},
+      {text:'Autorisation bancaire en cours…', delay:1000},
+      {text:'Confirmation de la transaction…', delay:800},
+      {text:'Paiement validé !', delay:700, done:true}
+    ];
+  }
+  return [
+    {text:'Connexion à ' + method + '…', delay:700},
+    {text:'Demande envoyée au ' + phoneNumber, delay:900},
+    {text:'En attente de confirmation sur le téléphone…', delay:1200},
+    {text:'Paiement validé !', delay:700, done:true}
+  ];
+}
+
+function runPaymentSimulation(method, phoneNumber){
   const btn = document.getElementById('payButton');
-  const original = btn.innerHTML;
+  const overlay = document.getElementById('paymentProcessing');
+  const statusEl = document.getElementById('ppStatus');
+  const spinner = overlay.querySelector('.pp-spinner');
+  const spinnerIcon = spinner.querySelector('i');
+  const dots = overlay.querySelector('.pp-dots');
+
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement du paiement…';
-  setTimeout(()=>{
-    btn.disabled = false;
-    btn.innerHTML = original;
-    renderConfirmation();
-    goClient('c-confirmation');
-  }, 1100);
+  spinner.classList.remove('done');
+  spinner.style.background = '';
+  spinner.style.color = '';
+  spinnerIcon.className = 'fa-solid fa-mobile-screen-button';
+  dots.classList.remove('done');
+  overlay.classList.add('active');
+
+  const steps = getPaymentSteps(method, phoneNumber);
+  let i = 0;
+  function next(){
+    if(i >= steps.length){
+      overlay.classList.remove('active');
+      btn.disabled = false;
+      renderConfirmation();
+      goClient('c-confirmation');
+      return;
+    }
+    const step = steps[i];
+    statusEl.textContent = step.text;
+    if(step.done){
+      spinner.classList.add('done');
+      spinner.style.background = 'rgba(31,169,106,.14)';
+      spinner.style.color = 'var(--green)';
+      spinnerIcon.className = 'fa-solid fa-check';
+      dots.classList.add('done');
+    }
+    i++;
+    setTimeout(next, step.delay);
+  }
+  next();
 }
 
 function renderConfirmation(){
