@@ -107,9 +107,26 @@ body{
   height:30px; background:transparent; display:flex; align-items:center; justify-content:space-between;
   padding:0 20px; font-size:.72rem; font-weight:700; color:var(--text); flex-shrink:0;
 }
+
+/* In-app top bar: back navigation + contextual title */
+.topbar{
+  flex-shrink:0; height:46px; background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; padding:0 14px; position:relative; z-index:4;
+}
+.topbar .back-btn{
+  width:28px; height:28px; border-radius:50%; border:none; background:var(--bg); color:var(--navy);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.75rem; flex-shrink:0;
+  transition:.15s ease;
+}
+.topbar .back-btn:hover{background:var(--border);}
+.topbar .back-btn.invisible{visibility:hidden; pointer-events:none;}
+.topbar-title{font-size:.85rem; font-weight:800; color:var(--navy); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.topbar-step{font-size:.66rem; font-weight:700; color:var(--text-soft); background:var(--bg); padding:4px 9px; border-radius:999px; flex-shrink:0; white-space:nowrap;}
+
 .screen-body{flex:1; overflow-y:auto; padding:14px 16px 90px;}
 .app-view{display:none; flex-direction:column; height:100%;}
-.app-view.active{display:flex;}
+.app-view.active{display:flex; animation:viewIn .28s ease;}
+@keyframes viewIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
 
 /* Bottom nav */
 .bottom-nav{
@@ -119,9 +136,14 @@ body{
 .bottom-nav button{
   flex:1; border:none; background:none; display:flex; flex-direction:column; align-items:center;
   justify-content:center; gap:3px; font-size:.62rem; color:var(--text-soft); cursor:pointer; font-weight:600;
+  position:relative; transition:.15s ease;
 }
-.bottom-nav button i{font-size:1.05rem;}
+.bottom-nav button i{font-size:1.05rem; transition:.15s ease;}
 .bottom-nav button.active{color:var(--blue);}
+.bottom-nav button.active::before{
+  content:""; position:absolute; top:2px; width:22px; height:3px; border-radius:0 0 3px 3px; background:var(--blue);
+}
+.bottom-nav button:hover{color:var(--blue-dark);}
 
 /* Generic UI bits inside screens */
 .app-h1{font-size:1.2rem; font-weight:800; margin-bottom:4px; color:var(--navy);}
@@ -134,12 +156,18 @@ body{
 .btn-block{
   width:100%; padding:13px; border:none; border-radius:12px; background:var(--blue); color:#fff;
   font-weight:700; font-size:.88rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:.15s ease;
 }
+.btn-block:not(:disabled):hover{filter:brightness(1.07); transform:translateY(-1px); box-shadow:0 8px 16px rgba(29,111,214,.28);}
+.btn-block:not(:disabled):active{transform:translateY(0); filter:brightness(.96);}
+.btn-block:disabled{opacity:.4; cursor:not-allowed;}
 .btn-block.secondary{background:var(--surface); color:var(--blue); border:1.5px solid var(--blue);}
+.btn-block.secondary:not(:disabled):hover{background:rgba(29,111,214,.07); box-shadow:none;}
 .result-card{
   background:var(--surface); border-radius:14px; padding:14px; margin-bottom:12px; border:1px solid var(--border);
-  display:flex; flex-direction:column; gap:6px;
+  display:flex; flex-direction:column; gap:6px; transition:.15s ease;
 }
+.result-card:hover{border-color:rgba(29,111,214,.4); box-shadow:0 10px 22px rgba(15,27,45,.09);}
 .result-top{display:flex; justify-content:space-between; align-items:center;}
 .result-time{font-weight:800; font-size:1rem;}
 .result-price{font-weight:800; color:var(--blue); font-size:1rem;}
@@ -149,8 +177,11 @@ body{
 .chip-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
 .chip{
   padding:8px 14px; border-radius:999px; border:1.5px solid var(--border); font-size:.78rem; font-weight:700; cursor:pointer; color:var(--text-soft);
+  transition:.15s ease;
 }
+.chip:hover{border-color:var(--blue); color:var(--blue);}
 .chip.selected{border-color:var(--blue); color:var(--blue); background:rgba(29,111,214,.08);}
+.chip.selected:hover{color:var(--blue-dark);}
 .summary-line{display:flex; justify-content:space-between; font-size:.83rem; padding:8px 0; border-bottom:1px dashed var(--border);}
 .summary-line strong{font-weight:800;}
 .ticket-card{
@@ -172,7 +203,10 @@ body{
 .action-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
 .action-tile{
   background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; cursor:pointer;
+  transition:.15s ease;
 }
+.action-tile:hover{border-color:rgba(29,111,214,.4); box-shadow:0 10px 20px rgba(15,27,45,.09); transform:translateY(-2px);}
+.action-tile:active{transform:translateY(0);}
 .action-tile i{font-size:1.3rem; color:var(--blue); margin-bottom:6px; display:block;}
 .action-tile span{font-size:.74rem; font-weight:700; color:var(--text);}
 .scan-frame{
@@ -213,7 +247,8 @@ body{
   cursor:pointer; transition:.12s ease;
 }
 .wseat.occupied{background:#e4e8ee; color:#aab3c0; cursor:not-allowed; border-color:#e4e8ee;}
-.wseat.available:hover{border-color:var(--blue); color:var(--blue);}
+.wseat.available:hover{border-color:var(--blue); color:var(--blue); transform:translateY(-1px);}
+.wseat.available:active{transform:scale(.9);}
 .wseat.selected{background:var(--blue); border-color:var(--blue); color:#fff;}
 .seat-legend{display:flex; gap:14px; justify-content:center; margin-top:14px; font-size:.68rem; color:var(--text-soft);}
 .seat-legend span{display:flex; align-items:center; gap:5px;}
@@ -222,6 +257,13 @@ body{
   background:rgba(29,111,214,.08); border:1px solid rgba(29,111,214,.25); color:var(--blue-dark);
   border-radius:12px; padding:10px 14px; font-size:.8rem; font-weight:700; margin-bottom:14px; text-align:center;
 }
+.seat-selected-banner.shake{animation:shakeX .35s ease;}
+.seat-selected-banner.limit{background:rgba(242,165,60,.14); border-color:rgba(242,165,60,.4); color:#8a5a10;}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+
+/* Payment form validation */
+.field input.input-error{border-color:var(--red); box-shadow:0 0 0 3px rgba(229,72,77,.12);}
+.error-text{color:var(--red) !important;}
 </style>
 </head>
 <body>
@@ -276,61 +318,67 @@ body{
       <div class="notch"></div>
       <div class="screen">
         <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+        <div class="topbar">
+          <button class="back-btn invisible" id="backClient" onclick="goBackClient()"><i class="fa-solid fa-chevron-left"></i></button>
+          <div class="topbar-title" id="titleClient">Rechercher un trajet</div>
+          <div class="topbar-step" id="stepClient">Étape 1/5</div>
+        </div>
         <div class="screen-body">
 
           <!-- Accueil -->
           <div class="app-view active" id="c-accueil">
             <div class="app-h1">Bonjour 👋</div>
             <div class="app-sub">Où souhaitez-vous voyager aujourd'hui ?</div>
-            <div class="field"><label>Départ</label><select><option>Owendo</option><option>N'Djolé</option></select></div>
-            <div class="field"><label>Arrivée</label><select><option>Franceville</option><option>Booué</option></select></div>
-            <div class="field"><label>Date</label><input type="date" value="2026-07-25"></div>
-            <div class="field"><label>Passagers</label><input type="number" value="1" min="1"></div>
-            <button class="btn-block" onclick="goClient('c-resultats')"><i class="fa-solid fa-magnifying-glass"></i> Rechercher un train</button>
+            <div class="field"><label>Départ</label><select id="selDep"><option>Owendo</option><option>N'Djolé</option></select></div>
+            <div class="field"><label>Arrivée</label><select id="selArr"><option>Franceville</option><option>Booué</option></select></div>
+            <div class="field"><label>Date</label><input type="date" id="selDate" value="2026-07-25"></div>
+            <div class="field"><label>Passagers</label><input type="number" id="inputPassengers" value="1" min="1" max="4"></div>
+            <button class="btn-block" onclick="startSearch()"><i class="fa-solid fa-magnifying-glass"></i> Rechercher un train</button>
           </div>
 
           <!-- Résultats -->
           <div class="app-view" id="c-resultats">
             <div class="app-h1">3 trains disponibles</div>
-            <div class="app-sub">Owendo → Franceville · 25 juil. 2026</div>
+            <div class="app-sub" id="resultsRouteLabel">Owendo → Franceville · 25 juil. 2026</div>
             <div class="result-card">
               <div class="result-top"><span class="result-time">06:00 → 16:30</span><span class="result-price">25 000 F</span></div>
               <div><span class="tag tag-express">Express</span></div>
-              <button class="btn-block secondary" onclick="goClient('c-details')" style="margin-top:8px;">Sélectionner ce train</button>
+              <button class="btn-block secondary" onclick="chooseTrain('201 Express','06:00 → 16:30',25000)" style="margin-top:8px;">Sélectionner ce train</button>
             </div>
             <div class="result-card">
               <div class="result-top"><span class="result-time">08:30 → 21:10</span><span class="result-price">18 000 F</span></div>
               <div><span class="tag tag-omnibus">Omnibus</span></div>
-              <button class="btn-block secondary" onclick="goClient('c-details')" style="margin-top:8px;">Sélectionner ce train</button>
+              <button class="btn-block secondary" onclick="chooseTrain('102 Omnibus','08:30 → 21:10',18000)" style="margin-top:8px;">Sélectionner ce train</button>
             </div>
             <div class="result-card">
               <div class="result-top"><span class="result-time">13:00 → 23:40</span><span class="result-price">25 000 F</span></div>
               <div><span class="tag tag-express">Express</span></div>
-              <button class="btn-block secondary" onclick="goClient('c-details')" style="margin-top:8px;">Sélectionner ce train</button>
+              <button class="btn-block secondary" onclick="chooseTrain('305 Express','13:00 → 23:40',25000)" style="margin-top:8px;">Sélectionner ce train</button>
             </div>
           </div>
 
           <!-- Détails billet -->
           <div class="app-view" id="c-details">
             <div class="app-h1">Détails du billet</div>
-            <div class="app-sub">Train 201 Express · 06:00 → 16:30</div>
+            <div class="app-sub" id="detailsTrainLabel">Train 201 Express · 06:00 → 16:30</div>
             <div class="field"><label>Classe</label>
               <div class="chip-row">
-                <div class="chip selected">2ème</div><div class="chip">1ère</div><div class="chip">VIP</div>
+                <div class="chip selected" onclick="selectClass(this,'2eme')">2ème</div><div class="chip" onclick="selectClass(this,'1ere')">1ère</div><div class="chip" onclick="selectClass(this,'vip')">VIP</div>
               </div>
             </div>
-            <div class="field"><label>Nom du passager</label><input placeholder="Jean Ondo"></div>
+            <div class="field"><label>Nom du passager principal</label><input placeholder="Jean Ondo"></div>
             <div class="field"><label>Téléphone</label><input placeholder="+241 07 00 00 00"></div>
             <div class="field"><label>Options</label>
-              <div class="chip-row"><div class="chip selected">Place assise</div><div class="chip">Assurance voyage</div></div>
+              <div class="chip-row"><div class="chip selected" style="cursor:default;">Place assise incluse</div><div class="chip" onclick="toggleInsurance(this)">Assurance voyage (+2 000 F/pers.)</div></div>
             </div>
+            <div class="summary-line" style="border-bottom:none;"><span>Total estimé (<span id="detailsPaxCount">1</span> passager(s))</span><strong id="detailsPriceValue" style="color:var(--blue);">25 000 FCFA</strong></div>
             <button class="btn-block" onclick="goClient('c-sieges')"><i class="fa-solid fa-arrow-right"></i> Continuer vers le choix du siège</button>
           </div>
 
           <!-- Choix du siège -->
           <div class="app-view" id="c-sieges">
             <div class="app-h1">Choisissez votre place</div>
-            <div class="app-sub">Voiture V-01 · 2ème classe · Owendo → Franceville</div>
+            <div class="app-sub" id="seatsSubtitle">Voiture V-01 · 2ème classe · Sélectionnez 1 place</div>
 
             <div class="wagon-illustration">
               <div class="wagon-front"><i class="fa-solid fa-train"></i> Avant du wagon</div>
@@ -373,18 +421,24 @@ body{
           </div>
           <div class="app-view" id="c-paiement">
             <div class="app-h1">Paiement</div>
-            <div class="app-sub">Total à régler : 25 000 FCFA</div>
-            <div class="summary-line"><span>Place réservée</span><strong>Voiture V-01, siège <span class="seat-echo">à choisir</span></strong></div>
+            <div class="app-sub">Vérifiez les détails avant de régler</div>
+            <div class="summary-line"><span>Trajet</span><strong id="payTrajet">Owendo → Franceville</strong></div>
+            <div class="summary-line"><span>Train</span><strong id="payTrain">201 Express · 06:00 → 16:30</strong></div>
+            <div class="summary-line"><span>Classe</span><strong id="payClasse">2ème classe</strong></div>
+            <div class="summary-line"><span>Passagers</span><strong id="payPax">1</strong></div>
+            <div class="summary-line"><span>Places réservées</span><strong id="paySeats">à choisir</strong></div>
+            <div class="summary-line" id="payOptionsLine" style="display:none;"><span>Options</span><strong id="payOptions"></strong></div>
+            <div class="summary-line" style="border-bottom:none;"><span>Total à régler</span><strong id="payTotal" style="color:var(--blue); font-size:.95rem;">25 000 FCFA</strong></div>
             <div class="field"><label>Méthode de paiement</label>
               <div class="chip-row">
-                <div class="chip selected">Airtel Money</div><div class="chip">Moov Money</div><div class="chip">Carte bancaire</div>
+                <div class="chip selected" onclick="chipSelect(this)">Airtel Money</div><div class="chip" onclick="chipSelect(this)">Moov Money</div><div class="chip" onclick="chipSelect(this)">Carte bancaire</div>
               </div>
             </div>
-            <div class="field"><label>Numéro de téléphone</label><input placeholder="074 00 00 00"></div>
+            <div class="field"><label>Numéro de téléphone</label><input id="payPhone" placeholder="074 00 00 00"></div>
             <div class="field" style="display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" checked style="width:auto;"> <span style="font-size:.78rem; color:var(--text-soft);">J'accepte les conditions générales de vente</span>
+              <input type="checkbox" id="payTerms" checked style="width:auto;"> <span id="termsLabel" style="font-size:.78rem; color:var(--text-soft);">J'accepte les conditions générales de vente</span>
             </div>
-            <button class="btn-block" onclick="goClient('c-confirmation')"><i class="fa-solid fa-lock"></i> Payer 25 000 FCFA</button>
+            <button class="btn-block" id="payButton" onclick="payNow()"><i class="fa-solid fa-lock"></i> <span id="payButtonLabel">Payer 25 000 FCFA</span></button>
           </div>
 
           <!-- Confirmation -->
@@ -392,18 +446,19 @@ body{
             <div class="center">
               <div class="success-icon"><i class="fa-solid fa-check"></i></div>
               <div class="app-h1">Paiement confirmé !</div>
-              <div class="app-sub">Réservation n° RS-88213-GA</div>
+              <div class="app-sub" id="confReservation">Réservation n° RS-88213-GA</div>
             </div>
             <div class="ticket-card">
-              <div class="r"><span>Trajet</span><strong>Owendo → Franceville</strong></div>
-              <div class="r"><span>Train</span><strong>201 Express</strong></div>
-              <div class="r"><span>Classe</span><strong>2ème classe</strong></div>
-              <div class="r"><span>Place</span><strong>Voiture V-01, siège <span class="seat-echo">à choisir</span></strong></div>
-              <div class="r"><span>Passager</span><strong>Jean Ondo</strong></div>
+              <div class="r"><span>Trajet</span><strong id="confRoute">Owendo → Franceville</strong></div>
+              <div class="r"><span>Train</span><strong id="confTrain">201 Express</strong></div>
+              <div class="r"><span>Classe</span><strong id="confClasse">2ème classe</strong></div>
+              <div class="r"><span>Place(s)</span><strong id="confSeats">Voiture V-01, siège <span class="seat-echo">à choisir</span></strong></div>
+              <div class="r"><span>Passagers</span><strong id="confPax">1 passager</strong></div>
+              <div class="r"><span>Total payé</span><strong id="confTotal">25 000 FCFA</strong></div>
             </div>
             <div class="qr-box"><i class="fa-solid fa-qrcode" style="font-size:70px; color:#111;"></i></div>
             <button class="btn-block"><i class="fa-solid fa-download"></i> Télécharger le billet (PDF)</button>
-            <button class="btn-block secondary" style="margin-top:8px;" onclick="goClient('c-accueil')"><i class="fa-solid fa-house"></i> Retour à l'accueil</button>
+            <button class="btn-block secondary" style="margin-top:8px;" onclick="resetBooking()"><i class="fa-solid fa-house"></i> Retour à l'accueil</button>
           </div>
 
         </div>
@@ -426,6 +481,10 @@ body{
       <div class="notch"></div>
       <div class="screen">
         <div class="status-bar"><span>9:41</span><span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-three-quarters"></i></span></div>
+        <div class="topbar">
+          <button class="back-btn invisible" id="backControl" onclick="goBackControl()"><i class="fa-solid fa-chevron-left"></i></button>
+          <div class="topbar-title" id="titleControl">Tableau de bord</div>
+        </div>
         <div class="screen-body">
 
           <!-- Dashboard -->
@@ -518,33 +577,246 @@ function showPhone(which){
   document.getElementById('swControl').classList.toggle('active', which==='controleur');
 }
 
+const CLIENT_FLOW = ['c-accueil','c-resultats','c-details','c-sieges','c-paiement','c-confirmation'];
+const CLIENT_TITLES = {
+  'c-accueil':'Rechercher un trajet',
+  'c-resultats':'Trains disponibles',
+  'c-details':'Détails du billet',
+  'c-sieges':'Choix de la place',
+  'c-paiement':'Paiement',
+  'c-confirmation':'Confirmation'
+};
+
+// ===== État de la réservation (rend le parcours passager dynamique) =====
+const CLASS_INFO = {
+  '2eme': {label:'2ème classe', mult:1},
+  '1ere': {label:'1ère classe', mult:1.5},
+  'vip':  {label:'Classe VIP', mult:2.2}
+};
+const INSURANCE_PRICE = 2000;
+
+let booking = {
+  route: 'Owendo → Franceville',
+  date: '2026-07-25',
+  passengers: 1,
+  train: { name:'201 Express', time:'06:00 → 16:30', price:25000 },
+  classKey: '2eme',
+  insurance: false,
+  seats: []
+};
+
+function formatFCFA(n){ return n.toLocaleString('fr-FR') + ' FCFA'; }
+function computeTotal(){
+  const perSeat = Math.round(booking.train.price * CLASS_INFO[booking.classKey].mult);
+  let total = perSeat * booking.passengers;
+  if(booking.insurance) total += INSURANCE_PRICE * booking.passengers;
+  return {perSeat, total};
+}
+
+function chipSelect(el){
+  el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function startSearch(){
+  const dep = document.getElementById('selDep').value;
+  const arr = document.getElementById('selArr').value;
+  booking.route = dep + ' → ' + arr;
+  booking.date = document.getElementById('selDate').value;
+  const pax = parseInt(document.getElementById('inputPassengers').value, 10);
+  booking.passengers = Math.max(1, Math.min(isNaN(pax)?1:pax, 4));
+  booking.seats = [];
+  goClient('c-resultats');
+}
+
+function chooseTrain(name, time, price){
+  booking.train = { name, time, price };
+  booking.seats = [];
+  goClient('c-details');
+}
+
+function selectClass(el, key){
+  chipSelect(el);
+  booking.classKey = key;
+  updatePriceEstimate();
+}
+
+function toggleInsurance(el){
+  booking.insurance = !booking.insurance;
+  el.classList.toggle('selected', booking.insurance);
+  updatePriceEstimate();
+}
+
+function updatePriceEstimate(){
+  const {total} = computeTotal();
+  const priceEl = document.getElementById('detailsPriceValue');
+  const paxEl = document.getElementById('detailsPaxCount');
+  if(priceEl) priceEl.textContent = formatFCFA(total);
+  if(paxEl) paxEl.textContent = booking.passengers;
+}
+
+function renderResults(){
+  const dateLabel = booking.date ? new Date(booking.date).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'}) : '';
+  document.getElementById('resultsRouteLabel').textContent = booking.route + (dateLabel ? ' · ' + dateLabel : '');
+}
+
+function renderDetails(){
+  document.getElementById('detailsTrainLabel').textContent = 'Train ' + booking.train.name + ' · ' + booking.train.time;
+  updatePriceEstimate();
+}
+
+function renderSeatsScreen(){
+  document.querySelectorAll('#seatGrid .wseat').forEach(s=>{
+    if(s.classList.contains('occupied')) return;
+    if(booking.seats.includes(s.dataset.seat)){ s.classList.add('selected'); s.classList.remove('available'); }
+    else { s.classList.remove('selected'); s.classList.add('available'); }
+  });
+  const plural = booking.passengers>1 ? 's' : '';
+  document.getElementById('seatsSubtitle').textContent = 'Voiture V-01 · ' + CLASS_INFO[booking.classKey].label + ' · Sélectionnez ' + booking.passengers + ' place' + plural;
+  updateSeatBanner();
+}
+
+function updateSeatBanner(){
+  const banner = document.getElementById('seatBanner');
+  const btn = document.getElementById('btn-confirm-seat');
+  const n = booking.seats.length;
+  banner.classList.remove('limit');
+  if(n===0){
+    banner.innerHTML = '<i class="fa-solid fa-chair"></i> Aucune place sélectionnée (0/' + booking.passengers + ')';
+  } else {
+    banner.innerHTML = '<i class="fa-solid fa-chair"></i> ' + n + '/' + booking.passengers + ' place(s) sélectionnée(s) : ' + booking.seats.join(', ');
+  }
+  btn.disabled = (n !== booking.passengers);
+  document.querySelectorAll('.seat-echo').forEach(el => el.textContent = booking.seats.join(', ') || 'à choisir');
+}
+
+function flashSeatLimit(){
+  const banner = document.getElementById('seatBanner');
+  banner.classList.add('limit');
+  banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Vous avez déjà sélectionné ' + booking.passengers + ' place(s) pour ' + booking.passengers + ' passager(s)';
+  banner.classList.add('shake');
+  setTimeout(()=>banner.classList.remove('shake'), 350);
+}
+
+function renderPayment(){
+  const {total} = computeTotal();
+  document.getElementById('payTrajet').textContent = booking.route;
+  document.getElementById('payTrain').textContent = booking.train.name + ' · ' + booking.train.time;
+  document.getElementById('payClasse').textContent = CLASS_INFO[booking.classKey].label;
+  document.getElementById('payPax').textContent = booking.passengers;
+  document.getElementById('paySeats').textContent = booking.seats.length ? ('V-01, ' + booking.seats.join(', ')) : 'à choisir';
+  const optLine = document.getElementById('payOptionsLine');
+  if(booking.insurance){
+    optLine.style.display = 'flex';
+    document.getElementById('payOptions').textContent = 'Assurance voyage (+' + formatFCFA(INSURANCE_PRICE * booking.passengers) + ')';
+  } else {
+    optLine.style.display = 'none';
+  }
+  document.getElementById('payTotal').textContent = formatFCFA(total);
+  document.getElementById('payButtonLabel').textContent = 'Payer ' + formatFCFA(total);
+}
+
+function payNow(){
+  const phone = document.getElementById('payPhone');
+  const terms = document.getElementById('payTerms');
+  const termsLabel = document.getElementById('termsLabel');
+  let valid = true;
+  if(!phone.value.trim()){ phone.classList.add('input-error'); valid = false; } else { phone.classList.remove('input-error'); }
+  if(!terms.checked){ termsLabel.classList.add('error-text'); valid = false; } else { termsLabel.classList.remove('error-text'); }
+  if(!valid) return;
+
+  const btn = document.getElementById('payButton');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement du paiement…';
+  setTimeout(()=>{
+    btn.disabled = false;
+    btn.innerHTML = original;
+    renderConfirmation();
+    goClient('c-confirmation');
+  }, 1100);
+}
+
+function renderConfirmation(){
+  const {total} = computeTotal();
+  document.getElementById('confRoute').textContent = booking.route;
+  document.getElementById('confTrain').textContent = booking.train.name;
+  document.getElementById('confClasse').textContent = CLASS_INFO[booking.classKey].label;
+  document.getElementById('confSeats').innerHTML = 'Voiture V-01, siège <span class="seat-echo">' + (booking.seats.join(', ') || 'à choisir') + '</span>';
+  document.getElementById('confPax').textContent = booking.passengers + (booking.passengers>1 ? ' passagers' : ' passager');
+  document.getElementById('confTotal').textContent = formatFCFA(total);
+  const resNum = 'RS-' + Math.floor(80000 + Math.random()*9000) + '-GA';
+  document.getElementById('confReservation').textContent = 'Réservation n° ' + resNum;
+}
+
+function resetBooking(){
+  booking.seats = [];
+  goClient('c-accueil');
+}
+
 function goClient(viewId){
   document.querySelectorAll('#blockClient .app-view').forEach(v=>v.classList.remove('active'));
   document.getElementById(viewId).classList.add('active');
   document.querySelectorAll('#blockClient .bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.c===viewId));
+  updateClientTopbar(viewId);
+  if(viewId==='c-resultats') renderResults();
+  if(viewId==='c-details') renderDetails();
+  if(viewId==='c-sieges') renderSeatsScreen();
+  if(viewId==='c-paiement') renderPayment();
+  document.querySelector('#blockClient .screen-body').scrollTo({top:0, behavior:'smooth'});
 }
 function clientTab(viewId, btn){ goClient(viewId); }
 
-// Sélection de siège dans le wagon
-let selectedSeat = null;
+function updateClientTopbar(viewId){
+  const idx = CLIENT_FLOW.indexOf(viewId);
+  document.getElementById('titleClient').textContent = CLIENT_TITLES[viewId] || '';
+  document.getElementById('backClient').classList.toggle('invisible', idx<=0);
+  document.getElementById('stepClient').textContent = viewId==='c-confirmation' ? 'Terminé' : ('Étape ' + (idx+1) + '/5');
+}
+function goBackClient(){
+  const current = document.querySelector('#blockClient .app-view.active').id;
+  const idx = CLIENT_FLOW.indexOf(current);
+  if(idx>0) goClient(CLIENT_FLOW[idx-1]);
+}
+
+// Sélection multi-sièges dans le wagon (jusqu'au nombre de passagers)
 document.getElementById('seatGrid').addEventListener('click', (e)=>{
   const seat = e.target.closest('.wseat');
   if(!seat || seat.classList.contains('occupied')) return;
-  document.querySelectorAll('#seatGrid .wseat.selected').forEach(s=>{ s.classList.remove('selected'); s.classList.add('available'); });
-  seat.classList.remove('available');
-  seat.classList.add('selected');
-  selectedSeat = seat.dataset.seat;
-  document.getElementById('seatBanner').innerHTML = '<i class="fa-solid fa-chair"></i> Place sélectionnée : Voiture V-01, siège ' + selectedSeat;
-  document.getElementById('btn-confirm-seat').disabled = false;
-  // Répercute le siège choisi sur le récapitulatif de paiement et le billet final
-  document.querySelectorAll('.seat-echo').forEach(el => el.textContent = selectedSeat);
+  const code = seat.dataset.seat;
+  if(seat.classList.contains('selected')){
+    seat.classList.remove('selected');
+    seat.classList.add('available');
+    booking.seats = booking.seats.filter(s => s!==code);
+  } else {
+    if(booking.seats.length >= booking.passengers){ flashSeatLimit(); return; }
+    seat.classList.remove('available');
+    seat.classList.add('selected');
+    booking.seats.push(code);
+  }
+  updateSeatBanner();
 });
+
+const CONTROL_TITLES = {
+  'k-dashboard':'Tableau de bord',
+  'k-scanner':'Contrôle du billet',
+  'k-historique':'Historique & suivi',
+  'k-signalement':'Signalement',
+  'k-voyageurs':'Infos voyageurs'
+};
 
 function controlTab(viewId, btn){
   document.querySelectorAll('#blockControl .app-view').forEach(v=>v.classList.remove('active'));
   document.getElementById(viewId).classList.add('active');
   document.querySelectorAll('#blockControl .bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.k===viewId));
+  updateControlTopbar(viewId);
+  document.querySelector('#blockControl .screen-body').scrollTo({top:0, behavior:'smooth'});
 }
+function updateControlTopbar(viewId){
+  document.getElementById('titleControl').textContent = CONTROL_TITLES[viewId] || '';
+  document.getElementById('backControl').classList.toggle('invisible', viewId==='k-dashboard');
+}
+function goBackControl(){ controlTab('k-dashboard', null); }
 </script>
 </body>
 </html>
