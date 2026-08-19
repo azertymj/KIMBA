@@ -88,6 +88,26 @@ body{
 .phone-block.hidden{display:none;}
 .phone-label{color:#fff; font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:8px;}
 .phone-label i{color:var(--amber);}
+.fs-btn{
+  width:26px; height:26px; border-radius:50%; border:1px solid rgba(255,255,255,.28); background:rgba(255,255,255,.08);
+  color:#fff; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:.68rem;
+  transition:.15s ease; flex-shrink:0;
+}
+.fs-btn i{color:#fff; margin:0;}
+.fs-btn:hover{background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.5);}
+
+/* ===== Mode plein écran ===== */
+.phone-block:fullscreen, .phone-block:-webkit-full-screen{
+  width:100vw; height:100vh; max-width:none;
+  background:radial-gradient(circle at 50% 10%, #1a2c4d 0%, #070c17 65%, #04070d 100%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:20px;
+}
+.phone-block:fullscreen .phone, .phone-block:-webkit-full-screen .phone{
+  transform:scale(var(--fs-scale,1)); transition:transform .2s ease;
+}
+.phone-block:fullscreen .fs-btn, .phone-block:-webkit-full-screen .fs-btn{
+  background:rgba(255,255,255,.14);
+}
 
 /* ===== PHONE FRAME ===== */
 .phone{
@@ -313,7 +333,9 @@ body{
 
   <!-- ============ PHONE 1 : APPLICATION CLIENT ============ -->
   <div class="phone-block" id="blockClient">
-    <div class="phone-label"><i class="fa-solid fa-mobile-screen-button"></i> Application Web & Mobile Client</div>
+    <div class="phone-label"><i class="fa-solid fa-mobile-screen-button"></i> Application Web & Mobile Client
+      <button class="fs-btn" onclick="toggleFullscreen(this)" title="Basculer en plein écran"><i class="fa-solid fa-expand"></i></button>
+    </div>
     <div class="phone">
       <div class="notch"></div>
       <div class="screen">
@@ -476,7 +498,9 @@ body{
 
   <!-- ============ PHONE 2 : APPLICATION CONTRÔLEUR ============ -->
   <div class="phone-block hidden" id="blockControl">
-    <div class="phone-label"><i class="fa-solid fa-user-shield"></i> Application Mobile Contrôleur</div>
+    <div class="phone-label"><i class="fa-solid fa-user-shield"></i> Application Mobile Contrôleur
+      <button class="fs-btn" onclick="toggleFullscreen(this)" title="Basculer en plein écran"><i class="fa-solid fa-expand"></i></button>
+    </div>
     <div class="phone">
       <div class="notch"></div>
       <div class="screen">
@@ -569,6 +593,36 @@ function closeIntro(){
   o.style.transition='opacity .2s ease'; o.style.opacity='0';
   setTimeout(()=>o.remove(),200);
 }
+
+// ===== Bouton plein écran =====
+function toggleFullscreen(btn){
+  const block = btn.closest('.phone-block');
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  if(!fsEl){
+    const req = block.requestFullscreen || block.webkitRequestFullscreen;
+    if(req) req.call(block);
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if(exit) exit.call(document);
+  }
+}
+function updateFullscreenState(){
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+  document.querySelectorAll('.phone-block').forEach(block=>{
+    const icon = block.querySelector('.fs-btn i');
+    if(block === fsEl){
+      const scale = Math.min((window.innerWidth*0.9)/300, (window.innerHeight*0.9)/620, 2.6);
+      block.style.setProperty('--fs-scale', scale.toFixed(3));
+      if(icon){ icon.classList.remove('fa-expand'); icon.classList.add('fa-compress'); }
+    } else {
+      block.style.removeProperty('--fs-scale');
+      if(icon){ icon.classList.remove('fa-compress'); icon.classList.add('fa-expand'); }
+    }
+  });
+}
+document.addEventListener('fullscreenchange', updateFullscreenState);
+document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+window.addEventListener('resize', updateFullscreenState);
 
 function showPhone(which){
   document.getElementById('blockClient').classList.toggle('hidden', which!=='client');
