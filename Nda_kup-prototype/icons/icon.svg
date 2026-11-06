@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Ndakup">
+  <rect width="128" height="128" rx="26" fill="#0f5434"/>
+  <rect x="0" y="0" width="128" height="8" fill="#1ea35e"/>
+  <rect x="42" y="0" width="44" height="8" fill="#f0b429"/>
+  <rect x="86" y="0" width="42" height="8" fill="#2f78c4"/>
+  <circle cx="64" cy="66" r="34" fill="#f0b429"/>
+  <path d="M44 78 L64 40 L84 78 M52 66 H76" fill="none" stroke="#0f5434" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

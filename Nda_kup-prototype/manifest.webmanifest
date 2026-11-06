@@ -1,0 +1,14 @@
+{
+  "name": "Ndakup — Prototype POUFA",
+  "short_name": "Ndakup",
+  "description": "Suivi technico-économique et traçabilité de la filière avicole",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#0f5434",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
